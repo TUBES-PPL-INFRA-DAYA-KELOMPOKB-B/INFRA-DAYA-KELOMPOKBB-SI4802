@@ -8,6 +8,11 @@ use Illuminate\Http\UploadedFile;
 
 class UserService
 {
+    public function __construct(protected ?UserLogService $logService = null)
+    {
+        $this->logService = $logService ?? app(UserLogService::class);
+    }
+
     /**
      * Mendapatkan daftar pengguna dengan paginasi, filter role, dan pencarian.
      */
@@ -40,12 +45,47 @@ class UserService
             $data['avatar'] = $this->uploadAvatar($avatarFile);
         }
 
-        return User::create($data);
+        $user = User::create($data);
+
+        // AC 6.3: Catat log pembuatan user baru
+        $this->logService->log(
+            'user_created',
+            $user->id,
+            null,
+            $user->only(['name', 'email', 'phone', 'role', 'is_active'])
+        );
+
+        return $user;
     }
 
     public function updateUser(int $id, array $data, ?UploadedFile $avatarFile = null): User
     {
         $user = User::findOrFail($id);
+
+        $oldData = $user->only(['name', 'email', 'phone', 'role', 'is_active']);
+
+        // AC 5.6: Admin tidak dapat mengubah role akunnya sendiri
+        if (isset($data['role']) && $data['role'] !== $user->role) {
+            if (auth()->id() === $user->id) {
+                throw new \DomainException('Anda tidak dapat mengubah role akun Anda sendiri.');
+            }
+
+            // AC 5.5: Perlindungan admin aktif terakhir
+            if ($user->isLastActiveAdmin() && $data['role'] !== 'admin') {
+                throw new \DomainException('Tidak dapat menurunkan role Admin aktif terakhir. Sistem harus memiliki setidaknya satu Admin yang aktif.');
+            }
+        }
+
+        // Perlindungan penonaktifan admin sendiri & admin terakhir
+        if (isset($data['is_active']) && ! (bool) $data['is_active']) {
+            if (auth()->id() === $user->id) {
+                throw new \DomainException('Anda tidak dapat menonaktifkan akun Anda sendiri.');
+            }
+
+            if ($user->isLastActiveAdmin()) {
+                throw new \DomainException('Tidak dapat menonaktifkan Admin aktif terakhir. Sistem harus memiliki setidaknya satu Admin yang aktif.');
+            }
+        }
 
         if ($avatarFile) {
             if ($user->avatar) {
@@ -65,14 +105,78 @@ class UserService
 
         $user->update($data);
 
+        $newData = $user->only(['name', 'email', 'phone', 'role', 'is_active']);
+
+        // AC 6.3: Catat log perubahan data
+        $this->logService->log('user_updated', $user->id, $oldData, $newData);
+
+        if (isset($oldData['role']) && isset($newData['role']) && $oldData['role'] !== $newData['role']) {
+            $this->logService->log(
+                'role_changed',
+                $user->id,
+                ['role' => $oldData['role']],
+                ['role' => $newData['role']]
+            );
+        }
+
         return $user;
     }
 
-    public function toggleUserStatus(int $id): User
+    /**
+     * AC 5.2: Aksi khusus untuk mengubah peran (role) pengguna secara langsung.
+     */
+    public function updateUserRole(int $id, string $newRole): User
     {
         $user = User::findOrFail($id);
-        $user->is_active = ! $user->is_active;
+
+        if (auth()->id() === $user->id && $newRole !== $user->role) {
+            throw new \DomainException('Anda tidak dapat mengubah role akun Anda sendiri.');
+        }
+
+        if ($user->isLastActiveAdmin() && $newRole !== 'admin') {
+            throw new \DomainException('Tidak dapat menurunkan role Admin aktif terakhir. Sistem harus memiliki setidaknya satu Admin yang aktif.');
+        }
+
+        $oldRole = $user->role;
+        $user->update(['role' => $newRole]);
+
+        // AC 6.3: Catat perubahan peran
+        $this->logService->log(
+            'role_changed',
+            $user->id,
+            ['role' => $oldRole],
+            ['role' => $newRole]
+        );
+
+        return $user;
+    }
+
+    public function toggleUserStatus(int $id, ?string $reason = null): User
+    {
+        $user = User::findOrFail($id);
+
+        if (auth()->id() === $user->id) {
+            throw new \DomainException('Anda tidak dapat menonaktifkan akun Anda sendiri saat sedang masuk.');
+        }
+
+        if ($user->is_active && $user->isLastActiveAdmin()) {
+            throw new \DomainException('Tidak dapat menonaktifkan Admin aktif terakhir. Sistem harus memiliki setidaknya satu Admin yang aktif.');
+        }
+
+        $oldStatus = $user->is_active;
+        $user->is_active = ! $oldStatus;
+        $user->deactivated_at = $user->is_active ? null : now();
         $user->save();
+
+        // AC 6.2: Pencatatan aktivasi / nonaktivasi
+        $action = $user->is_active ? 'account_activated' : 'account_deactivated';
+        $this->logService->log(
+            $action,
+            $user->id,
+            ['is_active' => $oldStatus],
+            ['is_active' => $user->is_active],
+            $reason
+        );
 
         return $user;
     }
@@ -85,11 +189,21 @@ class UserService
             throw new \DomainException('Pengguna tidak dapat dihapus karena memiliki riwayat laporan atau penugasan terkait.');
         }
 
+        $userData = $user->only(['name', 'email', 'role']);
+        $userId = $user->id;
+
         if ($user->avatar) {
             FileUploadService::deletePublicFile($user->avatar);
         }
 
-        return $user->delete();
+        $deleted = $user->delete();
+
+        if ($deleted) {
+            // AC 6.3: Catat log penghapusan pengguna
+            $this->logService->log('user_deleted', $userId, $userData, null);
+        }
+
+        return $deleted;
     }
 
     protected function uploadAvatar(UploadedFile $file): string

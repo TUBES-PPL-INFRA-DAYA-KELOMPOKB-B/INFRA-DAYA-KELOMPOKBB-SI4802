@@ -58,21 +58,42 @@ class UserController extends Controller
 
     public function update(UserUpdateRequest $request, int $id): RedirectResponse
     {
-        if (auth()->id() === $id && $request->has('is_active') && ! $request->boolean('is_active')) {
+        try {
+            $this->userService->updateUser(
+                $id,
+                $request->validated(),
+                $request->file('avatar')
+            );
+        } catch (\DomainException $e) {
             return redirect()
                 ->route('admin.users.edit', $id)
-                ->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
+                ->with('error', $e->getMessage());
         }
-
-        $this->userService->updateUser(
-            $id,
-            $request->validated(),
-            $request->file('avatar')
-        );
 
         return redirect()
             ->route('admin.users.index')
             ->with('success', 'Data pengguna berhasil diperbarui.');
+    }
+
+    /**
+     * AC 5.2: Aksi khusus ubah role pengguna.
+     */
+    public function updateRole(Request $request, int $id): RedirectResponse
+    {
+        $validated = $request->validate([
+            'role' => ['required', 'in:admin,petugas,pimpinan,warga'],
+        ], [
+            'role.required' => 'Peran pengguna wajib dipilih.',
+            'role.in' => 'Peran yang dipilih tidak valid.',
+        ]);
+
+        try {
+            $user = $this->userService->updateUserRole($id, $validated['role']);
+        } catch (\DomainException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', "Peran pengguna {$user->name} berhasil diubah menjadi {$user->role}.");
     }
 
     public function toggleActive(int $id): RedirectResponse
@@ -83,7 +104,14 @@ class UserController extends Controller
                 ->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri saat sedang masuk.');
         }
 
-        $user = $this->userService->toggleUserStatus($id);
+        try {
+            $user = $this->userService->toggleUserStatus($id);
+        } catch (\DomainException $e) {
+            return redirect()
+                ->route('admin.users.index')
+                ->with('error', $e->getMessage());
+        }
+
         $statusText = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
         Log::info("Status aktivasi akun user ID {$user->id} ({$user->name}) berhasil {$statusText} oleh Admin ID ".auth()->id());

@@ -13,6 +13,7 @@ use App\Http\Controllers\Petugas\TugasController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Publik\PetaPublikController;
 use App\Http\Controllers\Publik\TrackingController;
+use App\Http\Controllers\StorageFileController;
 use App\Http\Controllers\Warga\LaporanController;
 use App\Http\Controllers\Warga\UmpanBalikController;
 use Illuminate\Support\Facades\Route;
@@ -66,6 +67,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('kecamatan', KecamatanController::class)->except(['show']);
         Route::resource('kelurahan', KelurahanController::class)->except(['show']);
         Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
+        Route::patch('users/{user}/role', [UserController::class, 'updateRole'])->name('users.update-role');
         Route::resource('users', UserController::class);
         Route::resource('kategori', KategoriController::class)->except(['show']);
         // Fase 5: Verifikasi & Penilaian Prioritas
@@ -106,7 +108,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Dynamic file server for uploads (ensures uploaded images work seamlessly in serverless/Vercel)
-Route::get('/storage/{path}', [App\Http\Controllers\StorageFileController::class, 'show'])
+Route::get('/storage/{path}', [StorageFileController::class, 'show'])
     ->where('path', '.*')
     ->name('storage.file');
 

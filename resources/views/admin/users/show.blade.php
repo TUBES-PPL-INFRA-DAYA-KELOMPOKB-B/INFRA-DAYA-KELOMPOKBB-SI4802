@@ -104,6 +104,42 @@
             </x-card>
         </div>
 
+        <!-- Aksi Cepat Ubah Role (AC 5.2) -->
+        <x-card class="p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-100">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Ubah Hak Akses Peran (Role)</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Tetapkan peran pengguna. Hak akses fitur akan langsung berlaku pada permintaan berikutnya.</p>
+                </div>
+            </div>
+            @if(auth()->id() === $user->id)
+                <div class="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-center gap-3">
+                    <svg class="h-5 w-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <span>Anda tidak dapat mengubah peran akun Anda sendiri untuk mencegah terkuncinya akses sistem (*anti self-lockout*).</span>
+                </div>
+            @else
+                <form method="POST" action="{{ route('admin.users.update-role', $user->id) }}" class="mt-4 flex flex-col sm:flex-row items-center gap-3">
+                    @csrf
+                    @method('PATCH')
+                    <div class="w-full sm:w-64">
+                        <select
+                            name="role"
+                            dusk="quick-role-select"
+                            class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent text-slate-700"
+                        >
+                            <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }}>Admin DSDABM</option>
+                            <option value="petugas" {{ $user->role === 'petugas' ? 'selected' : '' }}>Petugas Lapangan</option>
+                            <option value="pimpinan" {{ $user->role === 'pimpinan' ? 'selected' : '' }}>Pimpinan Eksekutif</option>
+                            <option value="warga" {{ $user->role === 'warga' ? 'selected' : '' }}>Warga</option>
+                        </select>
+                    </div>
+                    <button type="submit" dusk="quick-role-submit" class="w-full sm:w-auto px-5 py-2 bg-[#1F3A5F] hover:bg-[#162a45] text-white rounded-xl text-sm font-medium transition-colors shadow-sm">
+                        Simpan Peran
+                    </button>
+                </form>
+            @endif
+        </x-card>
+
         <!-- Section Riwayat Log Aktivitas (Dependensi PBI-6) -->
         <x-card class="p-6">
             <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
