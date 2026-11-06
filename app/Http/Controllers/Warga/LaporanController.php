@@ -54,7 +54,13 @@ class LaporanController extends Controller
     {
         Gate::authorize('view', $laporan);
 
-        $laporan->load(['kelurahan.kecamatan', 'kategori', 'riwayatStatus.user']);
+        $laporan->load([
+            'kelurahan.kecamatan',
+            'kategori',
+            'riwayatStatus.user',
+            'disposisi.petugas',
+            'umpanBalik',
+        ]);
 
         return view('warga.laporan.show', compact('laporan'));
     }

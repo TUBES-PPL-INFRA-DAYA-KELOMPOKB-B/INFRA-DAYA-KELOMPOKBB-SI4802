@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class KategoriInfrastruktur extends Model
 {
@@ -35,5 +36,13 @@ class KategoriInfrastruktur extends Model
             3 => 'Tinggi',
             default => 'Sedang',
         };
+    }
+
+    /**
+     * Relasi ke seluruh laporan dalam kategori ini.
+     */
+    public function laporan(): HasMany
+    {
+        return $this->hasMany(LaporanKerusakan::class, 'kategori_id');
     }
 }

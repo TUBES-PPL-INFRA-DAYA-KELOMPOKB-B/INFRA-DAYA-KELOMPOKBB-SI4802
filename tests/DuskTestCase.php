@@ -18,6 +18,13 @@ abstract class DuskTestCase extends BaseTestCase
     public static function prepare(): void
     {
         if (! static::runningInSail()) {
+            $connection = @fsockopen('127.0.0.1', 9515);
+            if (is_resource($connection)) {
+                fclose($connection);
+
+                return;
+            }
+
             static::startChromeDriver(['--port=9515']);
         }
     }

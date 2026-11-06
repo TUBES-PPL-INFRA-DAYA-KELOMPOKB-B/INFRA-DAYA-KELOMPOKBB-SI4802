@@ -51,4 +51,33 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
         $response->assertRedirect('/');
     }
+
+    public function test_inactive_users_can_not_authenticate(): void
+    {
+        $user = User::factory()->create([
+            'is_active' => false,
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors('email');
+    }
+
+    public function test_inactive_authenticated_user_is_evicted_by_role_middleware(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'warga',
+            'is_active' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('warga.laporan.saya'));
+
+        $this->assertGuest();
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHasErrors('email');
+    }
 }

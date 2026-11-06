@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UserUpdateRequest;
 use App\Services\UserService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class UserController extends Controller
@@ -50,6 +51,12 @@ class UserController extends Controller
 
     public function update(UserUpdateRequest $request, int $id): RedirectResponse
     {
+        if (auth()->id() === $id && $request->has('is_active') && ! $request->boolean('is_active')) {
+            return redirect()
+                ->route('admin.users.edit', $id)
+                ->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
+        }
+
         $this->userService->updateUser(
             $id,
             $request->validated(),
@@ -63,8 +70,16 @@ class UserController extends Controller
 
     public function toggleActive(int $id): RedirectResponse
     {
+        if (auth()->id() === $id) {
+            return redirect()
+                ->route('admin.users.index')
+                ->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri saat sedang masuk.');
+        }
+
         $user = $this->userService->toggleUserStatus($id);
         $statusText = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+
+        Log::info("Status aktivasi akun user ID {$user->id} ({$user->name}) berhasil {$statusText} oleh Admin ID ".auth()->id());
 
         return redirect()
             ->route('admin.users.index')

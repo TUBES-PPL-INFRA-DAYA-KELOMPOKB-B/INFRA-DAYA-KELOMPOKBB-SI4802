@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -68,5 +69,15 @@ class User extends Authenticatable
     public function isWarga(): bool
     {
         return $this->role === 'warga';
+    }
+
+    public function penugasanPetugas(): HasMany
+    {
+        return $this->hasMany(DisposisiPenugasan::class, 'petugas_id');
+    }
+
+    public function scopePetugasAktif($query)
+    {
+        return $query->where('role', 'petugas')->where('is_active', true);
     }
 }

@@ -51,9 +51,9 @@ class UserService
 
         if ($avatarFile) {
             if ($user->avatar) {
-                Storage::disk('public')->delete($user->avatar);
+                FileUploadService::deletePublicFile($user->avatar);
             }
-            $data['avatar'] = $this->uploadAvatar($avatarFile);
+            $data['avatar'] = FileUploadService::storePublicFile($avatarFile, 'avatars');
         }
 
         if (empty($data['password'])) {
@@ -84,7 +84,7 @@ class UserService
         $user = User::findOrFail($id);
 
         if ($user->avatar) {
-            Storage::disk('public')->delete($user->avatar);
+            FileUploadService::deletePublicFile($user->avatar);
         }
 
         return $user->delete();
@@ -92,8 +92,6 @@ class UserService
 
     protected function uploadAvatar(UploadedFile $file): string
     {
-        $filename = Str::random(40).'.'.$file->getClientOriginalExtension();
-
-        return $file->storeAs('avatars', $filename, 'public');
+        return FileUploadService::storePublicFile($file, 'avatars');
     }
 }

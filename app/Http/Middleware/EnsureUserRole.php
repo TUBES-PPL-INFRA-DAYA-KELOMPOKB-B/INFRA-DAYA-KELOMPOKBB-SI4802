@@ -19,6 +19,16 @@ class EnsureUserRole
             return redirect()->route('login');
         }
 
+        if (! $request->user()->is_active) {
+            auth()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Akun Anda sedang dinonaktifkan oleh administrator.',
+            ]);
+        }
+
         if (! in_array($request->user()->role, $roles)) {
             if ($request->expectsJson()) {
                 return response()->json([

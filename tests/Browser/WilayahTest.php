@@ -146,7 +146,8 @@ class WilayahTest extends DuskTestCase
 
             $browser->visit(route('admin.kecamatan.index'))
                 ->type('input[name="search"]', 'Barat')
-                ->click('button[type="submit"]')
+                ->press('Cari')
+                ->waitForText('Bandung Barat')
                 ->assertSee('Bandung Barat')
                 ->assertDontSee('Bandung Timur');
         });

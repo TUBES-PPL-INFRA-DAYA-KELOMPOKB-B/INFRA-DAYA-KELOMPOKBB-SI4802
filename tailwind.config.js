@@ -13,6 +13,7 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Inter', 'Figtree', ...defaultTheme.fontFamily.sans],
+                serif: ['Playfair Display', 'Georgia', 'serif'],
             },
             colors: {
                 brand: {
