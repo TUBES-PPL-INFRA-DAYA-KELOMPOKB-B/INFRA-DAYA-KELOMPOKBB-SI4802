@@ -76,6 +76,29 @@ class User extends Authenticatable
         return $this->hasMany(DisposisiPenugasan::class, 'petugas_id');
     }
 
+    public function laporanKerusakan(): HasMany
+    {
+        return $this->hasMany(LaporanKerusakan::class, 'warga_id');
+    }
+
+    public function disposisiDibuat(): HasMany
+    {
+        return $this->hasMany(DisposisiPenugasan::class, 'admin_id');
+    }
+
+    public function riwayatStatus(): HasMany
+    {
+        return $this->hasMany(RiwayatStatus::class, 'user_id');
+    }
+
+    public function hasRelatedData(): bool
+    {
+        return $this->laporanKerusakan()->exists()
+            || $this->disposisiDibuat()->exists()
+            || $this->penugasanPetugas()->exists()
+            || $this->riwayatStatus()->exists();
+    }
+
     public function scopePetugasAktif($query)
     {
         return $query->where('role', 'petugas')->where('is_active', true);

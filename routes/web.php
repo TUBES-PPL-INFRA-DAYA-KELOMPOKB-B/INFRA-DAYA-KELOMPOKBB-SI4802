@@ -66,7 +66,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('kecamatan', KecamatanController::class)->except(['show']);
         Route::resource('kelurahan', KelurahanController::class)->except(['show']);
         Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
-        Route::resource('users', UserController::class)->except(['show']);
+        Route::resource('users', UserController::class);
         Route::resource('kategori', KategoriController::class)->except(['show']);
         // Fase 5: Verifikasi & Penilaian Prioritas
         Route::get('/verifikasi', [VerifikasiController::class, 'index'])->name('verifikasi.index');

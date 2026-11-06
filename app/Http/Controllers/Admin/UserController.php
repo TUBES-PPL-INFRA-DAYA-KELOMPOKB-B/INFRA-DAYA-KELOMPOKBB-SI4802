@@ -42,6 +42,13 @@ class UserController extends Controller
             ->with('success', 'Pengguna baru berhasil ditambahkan.');
     }
 
+    public function show(int $id): View
+    {
+        $user = $this->userService->findUser($id);
+
+        return view('admin.users.show', compact('user'));
+    }
+
     public function edit(int $id): View
     {
         $user = $this->userService->findUser($id);
@@ -94,7 +101,13 @@ class UserController extends Controller
                 ->with('error', 'Anda tidak dapat menghapus akun Anda sendiri saat sedang masuk.');
         }
 
-        $this->userService->deleteUser($id);
+        try {
+            $this->userService->deleteUser($id);
+        } catch (\DomainException $e) {
+            return redirect()
+                ->route('admin.users.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('admin.users.index')

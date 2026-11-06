@@ -5,8 +5,6 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class UserService
 {
@@ -82,6 +80,10 @@ class UserService
     public function deleteUser(int $id): bool
     {
         $user = User::findOrFail($id);
+
+        if ($user->hasRelatedData()) {
+            throw new \DomainException('Pengguna tidak dapat dihapus karena memiliki riwayat laporan atau penugasan terkait.');
+        }
 
         if ($user->avatar) {
             FileUploadService::deletePublicFile($user->avatar);
