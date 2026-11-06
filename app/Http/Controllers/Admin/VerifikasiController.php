@@ -114,4 +114,24 @@ class VerifikasiController extends Controller
             return back()->with('error', $e->getMessage());
         }
     }
+
+    /**
+     * Memperbarui skala prioritas penanganan laporan aktif (PBI-15).
+     */
+    public function updatePrioritas(VerifikasiRequest $request, int $id): RedirectResponse
+    {
+        try {
+            $laporan = $this->laporanService->updatePrioritasLaporan(
+                $id,
+                auth()->id(),
+                $request->validated('prioritas')
+            );
+
+            return redirect()
+                ->route('admin.verifikasi.show', $id)
+                ->with('success', "Tingkat prioritas laporan {$laporan->nomor_tiket} berhasil diperbarui menjadi " . ucfirst($laporan->prioritas) . '.');
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
 }

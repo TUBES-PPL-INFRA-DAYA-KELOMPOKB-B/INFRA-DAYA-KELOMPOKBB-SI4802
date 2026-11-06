@@ -242,4 +242,37 @@ class LaporanService
             return $laporan;
         });
     }
+
+    /**
+     * Memperbarui tingkat prioritas penanganan laporan kerusakan aktif (PBI-15).
+     */
+    public function updatePrioritasLaporan(int $id, int $adminId, string $prioritas): LaporanKerusakan
+    {
+        $validPrioritas = ['rendah', 'sedang', 'tinggi'];
+        if (! in_array(strtolower($prioritas), $validPrioritas, true)) {
+            throw new \InvalidArgumentException('Tingkat prioritas harus salah satu dari: Rendah, Sedang, atau Tinggi.');
+        }
+
+        return DB::transaction(function () use ($id, $adminId, $prioritas) {
+            $laporan = LaporanKerusakan::lockForUpdate()->findOrFail($id);
+
+            // Tolak perubahan prioritas jika laporan sudah selesai atau ditolak (AC02-11)
+            if (in_array($laporan->status, ['selesai', 'ditolak'], true)) {
+                throw new \InvalidArgumentException('Laporan yang sudah berstatus Selesai atau Ditolak tidak dapat diubah prioritasnya.');
+            }
+
+            $laporan->update([
+                'prioritas' => strtolower($prioritas),
+            ]);
+
+            RiwayatStatus::create([
+                'laporan_id' => $laporan->id,
+                'user_id' => $adminId,
+                'status' => $laporan->status,
+                'keterangan' => 'Tingkat prioritas penanganan diperbarui menjadi: ' . ucfirst($prioritas) . '.',
+            ]);
+
+            return $laporan;
+        });
+    }
 }

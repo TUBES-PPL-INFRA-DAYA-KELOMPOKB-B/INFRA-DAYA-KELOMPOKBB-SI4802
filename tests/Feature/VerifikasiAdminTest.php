@@ -320,4 +320,87 @@ class VerifikasiAdminTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('error');
     }
+
+    // =========================================================================
+    // PBI-15 (IFD-16): Penetapan & Pembaruan Skala Prioritas (TC02-03 s/d TC02-10)
+    // =========================================================================
+
+    public function test_tc02_03_sampai_06_admin_dapat_menetapkan_prioritas_saat_persetujuan(): void
+    {
+        $response = $this->actingAs($this->admin)->post(route('admin.verifikasi.setujui', $this->lap1->id), [
+            'prioritas' => 'tinggi',
+            'catatan_verifikator' => 'Prioritas tinggi karena jalan arteri utama.',
+        ]);
+
+        $response->assertRedirect(route('admin.verifikasi.show', $this->lap1->id));
+        $this->assertDatabaseHas('laporan_kerusakan', [
+            'id' => $this->lap1->id,
+            'prioritas' => 'tinggi',
+            'status' => 'diproses',
+        ]);
+    }
+
+    public function test_tc02_07_validasi_prioritas_wajib_diisi_saat_update_prioritas(): void
+    {
+        $response = $this->actingAs($this->admin)->patch(route('admin.verifikasi.prioritas', $this->lap2->id), [
+            'prioritas' => '',
+        ]);
+
+        $response->assertSessionHasErrors('prioritas');
+    }
+
+    public function test_tc02_08_validasi_nilai_prioritas_invalid_ditolak(): void
+    {
+        $response = $this->actingAs($this->admin)->patch(route('admin.verifikasi.prioritas', $this->lap2->id), [
+            'prioritas' => 'super_urgent_invalid',
+        ]);
+
+        $response->assertSessionHasErrors('prioritas');
+    }
+
+    public function test_tc02_09_admin_dapat_memperbarui_prioritas_laporan_aktif(): void
+    {
+        // LAP2 status 'diproses', ubah prioritas dari 'tinggi' ke 'rendah'
+        $response = $this->actingAs($this->admin)->patch(route('admin.verifikasi.prioritas', $this->lap2->id), [
+            'prioritas' => 'rendah',
+        ]);
+
+        $response->assertRedirect(route('admin.verifikasi.show', $this->lap2->id));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('laporan_kerusakan', [
+            'id' => $this->lap2->id,
+            'prioritas' => 'rendah',
+        ]);
+
+        $this->assertDatabaseHas('riwayat_status', [
+            'laporan_id' => $this->lap2->id,
+            'user_id' => $this->admin->id,
+            'keterangan' => 'Tingkat prioritas penanganan diperbarui menjadi: Rendah.',
+        ]);
+    }
+
+    public function test_tc02_10_sistem_menolak_perubahan_prioritas_pada_laporan_selesai(): void
+    {
+        $this->lap2->update(['status' => 'selesai']);
+
+        $response = $this->actingAs($this->admin)->patch(route('admin.verifikasi.prioritas', $this->lap2->id), [
+            'prioritas' => 'tinggi',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+    }
+
+    public function test_tc02_10b_sistem_menolak_perubahan_prioritas_pada_laporan_ditolak(): void
+    {
+        $this->lap2->update(['status' => 'ditolak']);
+
+        $response = $this->actingAs($this->admin)->patch(route('admin.verifikasi.prioritas', $this->lap2->id), [
+            'prioritas' => 'sedang',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+    }
 }

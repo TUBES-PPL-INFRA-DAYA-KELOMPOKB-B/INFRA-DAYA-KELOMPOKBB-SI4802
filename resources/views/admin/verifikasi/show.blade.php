@@ -165,15 +165,23 @@
             <div class="space-y-5">
                 <!-- Info Status Saat Ini -->
                 <x-card class="p-5">
-                    <h3 class="text-sm font-bold text-slate-700 mb-3">Status Laporan</h3>
+                    <h3 class="text-sm font-bold text-slate-700 mb-3">Status & Prioritas Laporan</h3>
                     <div class="space-y-2.5 text-sm">
                         <div class="flex items-center justify-between">
                             <span class="text-slate-500">Status Saat Ini</span>
                             <x-badge-status :status="$laporan->status" />
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-slate-500">Prioritas</span>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">
+                            <span class="text-slate-500">Tingkat Prioritas</span>
+                            @php
+                                $prioStyle = match($laporan->prioritas) {
+                                    'tinggi' => 'bg-rose-100 text-rose-800 border-rose-300',
+                                    'sedang' => 'bg-amber-100 text-amber-800 border-amber-300',
+                                    'rendah' => 'bg-sky-100 text-sky-800 border-sky-300',
+                                    default  => 'bg-slate-100 text-slate-700 border-slate-200',
+                                };
+                            @endphp
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border {{ $prioStyle }}">
                                 {{ ucfirst($laporan->prioritas ?? 'Belum ditentukan') }}
                             </span>
                         </div>
@@ -181,17 +189,39 @@
                 </x-card>
 
                 @if($laporan->status === 'menunggu_verifikasi')
-                    <!-- Form Terima Aduan (PBI-14) -->
+                    <!-- Form Terima Aduan & Penetapan Prioritas (PBI-14 & PBI-15) -->
                     <x-card class="p-5 border-l-4 border-l-emerald-500">
                         <h3 class="text-sm font-bold text-emerald-800 mb-2 flex items-center gap-2">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            Terima Aduan
+                            Terima Aduan & Tetapkan Prioritas
                         </h3>
                         <p class="text-xs text-slate-500 mb-3 leading-relaxed">
                             Laporan dinyatakan valid setelah pemeriksaan foto bukti, kesesuaian kategori, dan titik lokasi. Laporan akan diubah ke status <strong>Diproses</strong>.
                         </p>
                         <form method="POST" action="{{ route('admin.verifikasi.setujui', $laporan->id) }}" class="space-y-3">
                             @csrf
+                            <!-- Pilihan Prioritas (PBI-15) -->
+                            <div>
+                                <label for="prioritas" class="block text-xs font-semibold text-slate-700 mb-1">
+                                    Tingkat Prioritas Penanganan <span class="text-rose-500">*</span>
+                                </label>
+                                <select
+                                    name="prioritas"
+                                    id="prioritas"
+                                    required
+                                    dusk="select-prioritas"
+                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition @error('prioritas') border-rose-300 @else border-slate-300 @enderror"
+                                >
+                                    <option value="">Pilih Tingkat Prioritas...</option>
+                                    <option value="tinggi" {{ old('prioritas', $laporan->prioritas) === 'tinggi' ? 'selected' : '' }}>🔴 Tinggi — Urgensi Kritis / Bahaya Langsung</option>
+                                    <option value="sedang" {{ old('prioritas', $laporan->prioritas) === 'sedang' ? 'selected' : '' }}>🟡 Sedang — Perlu Segera Ditangani</option>
+                                    <option value="rendah" {{ old('prioritas', $laporan->prioritas) === 'rendah' ? 'selected' : '' }}>🔵 Rendah — Pemeliharaan Terjadwal</option>
+                                </select>
+                                @error('prioritas')
+                                    <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
                             <div>
                                 <label for="catatan_verifikator" class="block text-xs font-semibold text-slate-700 mb-1">Catatan Pemeriksaan <span class="text-slate-400">(opsional)</span></label>
                                 <textarea
@@ -264,6 +294,45 @@
                             Laporan ini telah diproses dengan status <strong>{{ ucfirst($laporan->status) }}</strong> sehingga tidak dapat dilakukan verifikasi ulang melalui aksi Terima/Tolak.
                         </p>
                     </x-card>
+
+                    @if($laporan->status === 'diproses')
+                        <!-- Form Perbarui Prioritas Laporan Aktif (PBI-15) -->
+                        <x-card class="p-5 border-l-4 border-l-amber-500">
+                            <h3 class="text-sm font-bold text-amber-800 mb-1 flex items-center gap-2">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                                Perbarui Skala Prioritas
+                            </h3>
+                            <p class="text-xs text-slate-500 mb-3 leading-relaxed">
+                                Sesuaikan tingkat urgensi penanganan untuk laporan yang sedang aktif (AC02-10).
+                            </p>
+                            <form method="POST" action="{{ route('admin.verifikasi.prioritas', $laporan->id) }}" class="space-y-3">
+                                @csrf
+                                @method('PATCH')
+                                <div>
+                                    <label for="update_prioritas" class="block text-xs font-semibold text-slate-700 mb-1">Tingkat Prioritas Baru <span class="text-rose-500">*</span></label>
+                                    <select
+                                        name="prioritas"
+                                        id="update_prioritas"
+                                        required
+                                        dusk="select-update-prioritas"
+                                        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent transition"
+                                    >
+                                        <option value="tinggi" {{ $laporan->prioritas === 'tinggi' ? 'selected' : '' }}>🔴 Tinggi — Urgensi Kritis</option>
+                                        <option value="sedang" {{ $laporan->prioritas === 'sedang' ? 'selected' : '' }}>🟡 Sedang — Perlu Segera</option>
+                                        <option value="rendah" {{ $laporan->prioritas === 'rendah' ? 'selected' : '' }}>🔵 Rendah — Terjadwal</option>
+                                    </select>
+                                </div>
+                                <button
+                                    type="submit"
+                                    dusk="btn-simpan-prioritas"
+                                    class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm"
+                                >
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    Simpan Prioritas
+                                </button>
+                            </form>
+                        </x-card>
+                    @endif
                 @endif
             </div>
         </div>

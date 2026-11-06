@@ -67,6 +67,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/verifikasi/{id}', [VerifikasiController::class, 'show'])->name('verifikasi.show');
         Route::post('/verifikasi/{id}/setujui', [VerifikasiController::class, 'setujui'])->name('verifikasi.setujui');
         Route::post('/verifikasi/{id}/tolak', [VerifikasiController::class, 'tolak'])->name('verifikasi.tolak');
+        // PBI-15: Penetapan & Pembaruan Skala Prioritas Penanganan
+        Route::patch('/verifikasi/{id}/prioritas', [VerifikasiController::class, 'updatePrioritas'])->name('verifikasi.prioritas');
         Route::get('/disposisi', fn () => redirect()->route('dashboard'))->name('disposisi.index');
         Route::get('/rekap', fn () => redirect()->route('dashboard'))->name('rekap.index');
     });
