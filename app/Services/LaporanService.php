@@ -58,8 +58,13 @@ class LaporanService
             $path = FileUploadService::storePublicFile($foto, 'laporan/sebelum');
 
             $kelurahanId = $data['kelurahan_id'] ?? Kelurahan::value('id');
-            $latitude = $data['latitude'] ?? -6.91746400;
-            $longitude = $data['longitude'] ?? 107.61912300;
+            $latitude = (float) ($data['latitude'] ?? -6.91746400);
+            $longitude = (float) ($data['longitude'] ?? 107.61912300);
+
+            $deskripsi = $data['deskripsi_kondisi'];
+            if (! empty($data['patokan_lokasi']) && ! str_contains($deskripsi, $data['patokan_lokasi'])) {
+                $deskripsi .= "\n[Patokan Lokasi: ".trim($data['patokan_lokasi']).']';
+            }
 
             $laporan = LaporanKerusakan::create([
                 'nomor_tiket' => $this->generateNomorTiket(),
@@ -67,7 +72,7 @@ class LaporanService
                 'kelurahan_id' => $kelurahanId,
                 'kategori_id' => $data['kategori_id'],
                 'judul' => $data['judul'],
-                'deskripsi_kondisi' => $data['deskripsi_kondisi'],
+                'deskripsi_kondisi' => $deskripsi,
                 'latitude' => $latitude,
                 'longitude' => $longitude,
                 'foto_bukti_sebelum' => $path,
@@ -96,13 +101,18 @@ class LaporanService
                 $data['foto_bukti_sebelum'] = FileUploadService::storePublicFile($foto, 'laporan/sebelum');
             }
 
+            $deskripsi = $data['deskripsi_kondisi'];
+            if (! empty($data['patokan_lokasi']) && ! str_contains($deskripsi, $data['patokan_lokasi'])) {
+                $deskripsi .= "\n[Patokan Lokasi: ".trim($data['patokan_lokasi']).']';
+            }
+
             $laporan->update([
-                'kelurahan_id' => $data['kelurahan_id'],
+                'kelurahan_id' => $data['kelurahan_id'] ?? $laporan->kelurahan_id,
                 'kategori_id' => $data['kategori_id'],
                 'judul' => $data['judul'],
-                'deskripsi_kondisi' => $data['deskripsi_kondisi'],
-                'latitude' => $data['latitude'],
-                'longitude' => $data['longitude'],
+                'deskripsi_kondisi' => $deskripsi,
+                'latitude' => (float) $data['latitude'],
+                'longitude' => (float) $data['longitude'],
                 'foto_bukti_sebelum' => $data['foto_bukti_sebelum'] ?? $laporan->foto_bukti_sebelum,
             ]);
 

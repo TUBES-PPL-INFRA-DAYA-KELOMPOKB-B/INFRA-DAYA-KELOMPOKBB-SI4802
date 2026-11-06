@@ -75,13 +75,64 @@ class LaporanWargaTest extends DuskTestCase
                 ->select('kategori_id', (string) $data['kategori']->id)
                 ->type('deskripsi_kondisi', 'Terdapat lubang berdiameter 60cm yang membahayakan pengendara motor.')
                 ->select('#kecamatan_select', (string) $data['kecamatan']->id)
-                ->pause(500) // Tunggu fetch chained dropdown
+                ->waitFor("#kelurahan_id option[value='{$data['kelurahan']->id}']", 5)
                 ->select('#kelurahan_id', (string) $data['kelurahan']->id)
                 ->attach('foto_bukti_sebelum', __DIR__.'/fixtures/sample_kerusakan.jpg')
                 ->click('@submit-btn')
                 ->waitForText('berhasil dikirim')
                 ->assertSee('berhasil dikirim')
                 ->assertSee('INFRA-');
+        });
+    }
+
+    /**
+     * PBI-8: Warga dapat menggeser pin marker Leaflet, verifikasi koordinat terisi dinamis,
+     * serta menekan tombol konfirmasi titik lokasi (SKF-03, NFR-01, NFR-03).
+     */
+    public function test_warga_can_interact_with_leaflet_map_and_confirm_pinpoint(): void
+    {
+        $data = $this->createSetupData();
+
+        $this->browse(function (Browser $browser) use ($data) {
+            $browser->loginAs($data['warga'])
+                ->visit(route('warga.laporan.create'))
+                ->waitFor('#leafletMap', 2) // NFR-01: waktu render elemen maksimal 2 detik
+                ->assertPresent('#leafletMap')
+                ->assertPresent('#btnUseMyLocation')
+                ->assertInputValue('#latitude', '-6.91746400')
+                ->assertInputValue('#longitude', '107.61912300');
+
+            // Simulasi pergeseran pin marker secara interaktif pada Leaflet.js
+            $browser->script([
+                'marker.setLatLng([-6.92500000, 107.63000000]);',
+                "marker.fire('dragend');",
+            ]);
+
+            // Verifikasi input koordinat terkunci terisi dinamis saat pin bergeser
+            $browser->pause(300)
+                ->assertInputValue('#latitude', '-6.92500000')
+                ->assertInputValue('#longitude', '107.63000000')
+                ->assertSeeIn('@coord-display', '-6.92500000')
+                ->assertPresent('@konfirmasi-titik-btn')
+                ->click('@konfirmasi-titik-btn')
+                ->waitFor('@konfirmasi-badge', 2)
+                ->assertSeeIn('@konfirmasi-badge', 'Titik koordinat berhasil dikonfirmasi')
+                ->type('@patokan-lokasi', 'Dekat Bundaran Cibiru')
+                ->type('judul', 'Jalan Rusak Pasca Pergeseran Pin')
+                ->select('kategori_id', (string) $data['kategori']->id)
+                ->type('deskripsi_kondisi', 'Titik lubang ditentukan dengan pin marker presisi.')
+                ->select('#kecamatan_select', (string) $data['kecamatan']->id)
+                ->waitFor("#kelurahan_id option[value='{$data['kelurahan']->id}']", 5)
+                ->select('#kelurahan_id', (string) $data['kelurahan']->id)
+                ->attach('foto_bukti_sebelum', __DIR__.'/fixtures/sample_kerusakan.jpg')
+                ->click('@submit-btn')
+                ->waitForText('berhasil dikirim')
+                ->assertSee('berhasil dikirim');
+
+            $this->assertDatabaseHas('laporan_kerusakan', [
+                'latitude' => -6.92500000,
+                'longitude' => 107.63000000,
+            ]);
         });
     }
 

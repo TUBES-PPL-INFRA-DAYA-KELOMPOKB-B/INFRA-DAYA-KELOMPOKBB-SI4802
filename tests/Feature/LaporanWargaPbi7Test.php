@@ -147,6 +147,8 @@ class LaporanWargaPbi7Test extends TestCase
             'judul' => 'Saluran Air Meluap di Bahu Jalan',
             'kategori_id' => $this->kategori->id,
             'deskripsi_kondisi' => 'Saluran air tersumbat endapan lumpur.',
+            'latitude' => -6.91746400,
+            'longitude' => 107.61912300,
             'foto_bukti_sebelum' => $pngFile,
         ]);
 
@@ -220,6 +222,8 @@ class LaporanWargaPbi7Test extends TestCase
             'judul' => '<script>alert("XSS")</script>Trotoar Rusak',
             'kategori_id' => $this->kategori->id,
             'deskripsi_kondisi' => '<b>Pecah</b> dan berantakan <iframe src="evil.com"></iframe>',
+            'latitude' => -6.91746400,
+            'longitude' => 107.61912300,
             'foto_bukti_sebelum' => $file,
         ];
 

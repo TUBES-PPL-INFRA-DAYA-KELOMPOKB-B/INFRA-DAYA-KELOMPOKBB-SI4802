@@ -27,6 +27,12 @@ class LaporanKerusakanRequest extends FormRequest
                 'deskripsi_kondisi' => $this->sanitizeInput($this->input('deskripsi_kondisi')),
             ]);
         }
+
+        if ($this->has('patokan_lokasi')) {
+            $this->merge([
+                'patokan_lokasi' => $this->sanitizeInput($this->input('patokan_lokasi')),
+            ]);
+        }
     }
 
     private function sanitizeInput(?string $value): string
@@ -54,8 +60,9 @@ class LaporanKerusakanRequest extends FormRequest
             'kategori_id' => ['required', 'exists:kategori_infrastruktur,id'],
             'kelurahan_id' => ['nullable', 'exists:kelurahan,id'],
             'deskripsi_kondisi' => ['required', 'string', 'max:2000'],
-            'latitude' => ['nullable', 'numeric', 'between:-7.05000000,-6.80000000'],
-            'longitude' => ['nullable', 'numeric', 'between:107.50000000,107.80000000'],
+            'patokan_lokasi' => ['nullable', 'string', 'max:255'],
+            'latitude' => ['required', 'numeric', 'between:-7.05000000,-6.80000000'],
+            'longitude' => ['required', 'numeric', 'between:107.50000000,107.80000000'],
             'foto_bukti_sebelum' => [
                 $isUpdate ? 'nullable' : 'required',
                 'image',
@@ -77,8 +84,10 @@ class LaporanKerusakanRequest extends FormRequest
             'deskripsi_kondisi.required' => 'Deskripsi kondisi kerusakan wajib diisi.',
             'deskripsi_kondisi.max' => 'Deskripsi maksimal 2000 karakter.',
             'latitude.required' => 'Titik koordinat latitude wajib ditentukan pada peta.',
+            'latitude.numeric' => 'Format koordinat latitude harus berupa desimal numerik valid.',
             'latitude.between' => 'Koordinat berada di luar rentang administratif Kota Bandung.',
             'longitude.required' => 'Titik koordinat longitude wajib ditentukan pada peta.',
+            'longitude.numeric' => 'Format koordinat longitude harus berupa desimal numerik valid.',
             'longitude.between' => 'Koordinat berada di luar rentang administratif Kota Bandung.',
             'foto_bukti_sebelum.required' => 'Foto bukti kondisi kerusakan wajib diunggah.',
             'foto_bukti_sebelum.image' => 'File bukti harus berupa gambar.',
