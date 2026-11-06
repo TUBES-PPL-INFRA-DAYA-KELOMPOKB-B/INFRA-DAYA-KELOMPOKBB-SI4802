@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\VerifikasiRequest;
 use App\Models\KategoriInfrastruktur;
 use App\Services\LaporanService;
 use App\Services\WilayahService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -60,5 +62,56 @@ class VerifikasiController extends Controller
             'tanggalMulai',
             'tanggalAkhir'
         ));
+    }
+
+    /**
+     * Menampilkan detail laporan kerusakan & bukti untuk verifikasi (PBI-14).
+     */
+    public function show(int $id): View
+    {
+        $laporan = $this->laporanService->findLaporan($id);
+
+        return view('admin.verifikasi.show', compact('laporan'));
+    }
+
+    /**
+     * Aksi terima aduan: validasi dan setujui laporan ke status diproses (PBI-14).
+     */
+    public function setujui(VerifikasiRequest $request, int $id): RedirectResponse
+    {
+        try {
+            $laporan = $this->laporanService->setujuiLaporan(
+                $id,
+                auth()->id(),
+                $request->validated('prioritas'),
+                $request->validated('catatan_verifikator')
+            );
+
+            return redirect()
+                ->route('admin.verifikasi.show', $id)
+                ->with('success', "Laporan {$laporan->nomor_tiket} berhasil disetujui dan dialihkan ke status Diproses.");
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Aksi tolak aduan: menolak laporan dengan catatan alasan penolakan wajib (PBI-14).
+     */
+    public function tolak(VerifikasiRequest $request, int $id): RedirectResponse
+    {
+        try {
+            $laporan = $this->laporanService->tolakLaporan(
+                $id,
+                auth()->id(),
+                $request->validated('alasan_penolakan')
+            );
+
+            return redirect()
+                ->route('admin.verifikasi.index')
+                ->with('success', "Laporan {$laporan->nomor_tiket} berhasil ditolak dengan alasan yang telah dicatat.");
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 }

@@ -63,6 +63,10 @@ Route::middleware('auth')->group(function () {
         Route::resource('kategori', KategoriController::class)->except(['show']);
         // PBI-13: Daftar Aduan & Filter Laporan Masuk
         Route::get('/verifikasi', [VerifikasiController::class, 'index'])->name('verifikasi.index');
+        // PBI-14: Verifikasi Detail Aduan, Terima & Tolak Laporan
+        Route::get('/verifikasi/{id}', [VerifikasiController::class, 'show'])->name('verifikasi.show');
+        Route::post('/verifikasi/{id}/setujui', [VerifikasiController::class, 'setujui'])->name('verifikasi.setujui');
+        Route::post('/verifikasi/{id}/tolak', [VerifikasiController::class, 'tolak'])->name('verifikasi.tolak');
         Route::get('/disposisi', fn () => redirect()->route('dashboard'))->name('disposisi.index');
         Route::get('/rekap', fn () => redirect()->route('dashboard'))->name('rekap.index');
     });

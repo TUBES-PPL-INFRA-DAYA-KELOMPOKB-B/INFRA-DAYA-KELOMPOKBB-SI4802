@@ -225,4 +225,99 @@ class VerifikasiAdminTest extends TestCase
 
         $response->assertSessionHasErrors('tanggal_akhir');
     }
+
+    // =========================================================================
+    // PBI-14 (IFD-15): Aksi Terima / Tolak Aduan (TC02-01 s/d TC02-14)
+    // =========================================================================
+
+    public function test_tc02_01_admin_dapat_melihat_detail_laporan_dan_bukti_foto(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.verifikasi.show', $this->lap1->id));
+
+        $response->assertStatus(200);
+        $response->assertSee('INFRA-001');
+        $response->assertSee('Lubang Jalan Dago Atas');
+        $response->assertSee('Dago');
+        $response->assertSee('Coblong');
+        $response->assertSee('Foto Bukti Fisik Kerusakan');
+    }
+
+    public function test_tc02_02_dan_03_admin_dapat_menerima_aduan_valid_menjadi_diproses(): void
+    {
+        $response = $this->actingAs($this->admin)->post(route('admin.verifikasi.setujui', $this->lap1->id), [
+            'catatan_verifikator' => 'Foto dan lokasi valid, diteruskan untuk penanganan.',
+        ]);
+
+        $response->assertRedirect(route('admin.verifikasi.show', $this->lap1->id));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('laporan_kerusakan', [
+            'id' => $this->lap1->id,
+            'status' => 'diproses',
+        ]);
+
+        $this->assertDatabaseHas('riwayat_status', [
+            'laporan_id' => $this->lap1->id,
+            'user_id' => $this->admin->id,
+            'status' => 'diproses',
+        ]);
+    }
+
+    public function test_tc02_04_dan_05_admin_dapat_menolak_laporan_dengan_alasan_valid(): void
+    {
+        $response = $this->actingAs($this->admin)->post(route('admin.verifikasi.tolak', $this->lap1->id), [
+            'alasan_penolakan' => 'Foto bukti tidak relevan dan lokasi berada di luar wilayah Kota Bandung.',
+        ]);
+
+        $response->assertRedirect(route('admin.verifikasi.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('laporan_kerusakan', [
+            'id' => $this->lap1->id,
+            'status' => 'ditolak',
+            'alasan_penolakan' => 'Foto bukti tidak relevan dan lokasi berada di luar wilayah Kota Bandung.',
+        ]);
+
+        $this->assertDatabaseHas('riwayat_status', [
+            'laporan_id' => $this->lap1->id,
+            'user_id' => $this->admin->id,
+            'status' => 'ditolak',
+        ]);
+    }
+
+    public function test_tc02_06_tolak_aduan_gagal_jika_alasan_kosong_atau_terlalu_pendek(): void
+    {
+        $responseEmpty = $this->actingAs($this->admin)->post(route('admin.verifikasi.tolak', $this->lap1->id), [
+            'alasan_penolakan' => '',
+        ]);
+        $responseEmpty->assertSessionHasErrors('alasan_penolakan');
+
+        $responseShort = $this->actingAs($this->admin)->post(route('admin.verifikasi.tolak', $this->lap1->id), [
+            'alasan_penolakan' => 'Spam',
+        ]);
+        $responseShort->assertSessionHasErrors('alasan_penolakan');
+
+        $this->assertDatabaseHas('laporan_kerusakan', [
+            'id' => $this->lap1->id,
+            'status' => 'menunggu_verifikasi',
+        ]);
+    }
+
+    public function test_tc02_11_warga_dan_guest_tidak_dapat_melakukan_verifikasi_aduan(): void
+    {
+        $responseGuest = $this->post(route('admin.verifikasi.setujui', $this->lap1->id));
+        $responseGuest->assertRedirect(route('login'));
+
+        $responseWarga = $this->actingAs($this->warga)->post(route('admin.verifikasi.setujui', $this->lap1->id));
+        $responseWarga->assertStatus(403);
+    }
+
+    public function test_tc02_13_sistem_mencegah_verifikasi_ulang_pada_laporan_yang_sudah_diproses(): void
+    {
+        // LAP2 sudah berstatus 'diproses'
+        $response = $this->actingAs($this->admin)->post(route('admin.verifikasi.setujui', $this->lap2->id));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+    }
 }

@@ -167,4 +167,79 @@ class LaporanService
             ->paginate($perPage)
             ->withQueryString();
     }
+
+    /**
+     * Mengambil detail laporan kerusakan untuk keperluan verifikasi (PBI-14).
+     */
+    public function findLaporan(int $id): LaporanKerusakan
+    {
+        return LaporanKerusakan::with(['warga', 'kategori', 'kelurahan.kecamatan', 'riwayatStatus.user'])->findOrFail($id);
+    }
+
+    /**
+     * Menerima / menyetujui laporan kerusakan oleh Admin DSDABM (PBI-14).
+     */
+    public function setujuiLaporan(int $id, int $adminId, ?string $prioritas = 'sedang', ?string $catatan = null): LaporanKerusakan
+    {
+        return DB::transaction(function () use ($id, $adminId, $prioritas, $catatan) {
+            $laporan = LaporanKerusakan::lockForUpdate()->findOrFail($id);
+
+            if ($laporan->status !== 'menunggu_verifikasi') {
+                throw new \InvalidArgumentException('Hanya laporan dengan status Menunggu Verifikasi yang dapat disetujui.');
+            }
+
+            $prio = $prioritas ?: ($laporan->prioritas ?: 'sedang');
+
+            $laporan->update([
+                'status' => 'diproses',
+                'prioritas' => $prio,
+                'alasan_penolakan' => null,
+            ]);
+
+            $keterangan = 'Laporan disetujui oleh Admin DSDABM.';
+            if ($prioritas) {
+                $keterangan .= ' Prioritas ditetapkan: ' . ucfirst($prio) . '.';
+            }
+            if ($catatan) {
+                $keterangan .= " Catatan verifikator: {$catatan}";
+            }
+
+            RiwayatStatus::create([
+                'laporan_id' => $laporan->id,
+                'user_id' => $adminId,
+                'status' => 'diproses',
+                'keterangan' => $keterangan,
+            ]);
+
+            return $laporan;
+        });
+    }
+
+    /**
+     * Menolak laporan kerusakan oleh Admin DSDABM dengan alasan konkret (PBI-14).
+     */
+    public function tolakLaporan(int $id, int $adminId, string $alasan): LaporanKerusakan
+    {
+        return DB::transaction(function () use ($id, $adminId, $alasan) {
+            $laporan = LaporanKerusakan::lockForUpdate()->findOrFail($id);
+
+            if ($laporan->status !== 'menunggu_verifikasi') {
+                throw new \InvalidArgumentException('Hanya laporan dengan status Menunggu Verifikasi yang dapat ditolak.');
+            }
+
+            $laporan->update([
+                'status' => 'ditolak',
+                'alasan_penolakan' => $alasan,
+            ]);
+
+            RiwayatStatus::create([
+                'laporan_id' => $laporan->id,
+                'user_id' => $adminId,
+                'status' => 'ditolak',
+                'keterangan' => "Laporan ditolak oleh Admin DSDABM. Alasan: {$alasan}",
+            ]);
+
+            return $laporan;
+        });
+    }
 }
