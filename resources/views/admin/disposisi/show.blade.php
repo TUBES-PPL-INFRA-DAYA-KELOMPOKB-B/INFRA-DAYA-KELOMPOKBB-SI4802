@@ -92,23 +92,25 @@
                         <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Tenggat Waktu Selesai (SLA)</span>
                             <div class="flex items-center justify-between">
-                                <p class="font-bold text-slate-800 text-sm">{{ $disposisi->tenggat_waktu->translatedFormat('l, d F Y') }}</p>
+                                <p class="font-bold text-slate-800 text-sm">{{ $disposisi->tenggat_waktu ? $disposisi->tenggat_waktu->translatedFormat('l, d F Y') : '-' }}</p>
                                 @if($disposisi->isSelesai())
                                     <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                                         Rampung
                                     </span>
-                                @elseif($disposisi->isOverdue())
+                                @elseif($disposisi->tenggat_waktu && $disposisi->isOverdue())
                                     <span class="text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
                                         Terlambat {{ abs($disposisi->sisaHari()) }} hari
                                     </span>
-                                @elseif($disposisi->sisaHari() === 0)
+                                @elseif($disposisi->tenggat_waktu && $disposisi->sisaHari() === 0)
                                     <span class="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
                                         Hari ini!
                                     </span>
-                                @else
+                                @elseif($disposisi->tenggat_waktu)
                                     <span class="text-[11px] font-bold text-slate-600 bg-slate-200/70 px-2 py-0.5 rounded-full">
                                         Sisa {{ $disposisi->sisaHari() }} hari
                                     </span>
+                                @else
+                                    <span class="text-[11px] text-slate-400">Tidak ditentukan</span>
                                 @endif
                             </div>
                         </div>

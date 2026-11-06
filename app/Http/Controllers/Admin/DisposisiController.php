@@ -25,6 +25,7 @@ class DisposisiController extends Controller
     public function index(Request $request): View
     {
         $search = $request->query('search');
+        $searchLaporan = $request->query('search_laporan', $search);
         $statusPenugasan = $request->query('status_penugasan');
         $petugasId = $request->query('petugas_id') ? (int) $request->query('petugas_id') : null;
 
@@ -34,6 +35,7 @@ class DisposisiController extends Controller
             $petugasId
         );
 
+        $laporanSiapDisposisi = $this->disposisiService->getLaporanSiapDisposisi($searchLaporan);
         $petugasList = $this->disposisiService->getPetugasAktif();
 
         // Metrik ringkasan
@@ -45,8 +47,10 @@ class DisposisiController extends Controller
 
         return view('admin.disposisi.index', compact(
             'disposisiList',
+            'laporanSiapDisposisi',
             'petugasList',
             'search',
+            'searchLaporan',
             'statusPenugasan',
             'petugasId',
             'totalDisposisi',
@@ -88,13 +92,14 @@ class DisposisiController extends Controller
     public function store(StoreDisposisiRequest $request): RedirectResponse
     {
         try {
+            // AC16-10: Input bisnis yang dipakai hanya laporan_id, petugas_id, dan catatan_instruksi.
+            // AC16-11: Admin, waktu, dan status awal ditentukan server; manipulasi nilai klien diabaikan.
             $disposisi = $this->disposisiService->createDisposisi(
-                (int) $request->validated('laporan_id'),
+                (int) $request->input('laporan_id'),
                 (int) auth()->id(),
-                (int) $request->validated('petugas_id'),
-                $request->validated('tenggat_waktu'),
-                $request->validated('catatan_instruksi'),
-                $request->validated('tanggal_disposisi')
+                (int) $request->input('petugas_id'),
+                $request->input('tenggat_waktu'),
+                (string) $request->input('catatan_instruksi')
             );
 
             return redirect()
@@ -102,6 +107,8 @@ class DisposisiController extends Controller
                 ->with('success', "Surat Tugas {$disposisi->nomor_surat_tugas} berhasil diterbitkan dan ditugaskan kepada petugas.");
         } catch (\InvalidArgumentException $e) {
             return back()->withInput()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', 'Gagal menyimpan disposisi: ' . $e->getMessage());
         }
     }
 
