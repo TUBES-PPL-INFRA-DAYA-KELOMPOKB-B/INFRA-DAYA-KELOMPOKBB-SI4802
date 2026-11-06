@@ -14,7 +14,7 @@ Terakhir diperbarui: 2026-10-12 (Fase 1)
 | **2** | **User & Role Management** | **DONE** | CRUD User, Aktivasi status akun, Avatar upload aman, Demo 4 Role seeder, 5/5 Dusk test PASS |
 | **3** | **Master Kategori Infrastruktur** | **DONE** | CRUD Kategori + Bobot Prioritas (1-3), Seeder 4 Kategori default, 5/5 Dusk test PASS |
 | **4** | **Pengajuan Laporan oleh Warga** | **DONE** | Form Leaflet.js Geotagging, Tiket Unik harian, Riwayat status log, IDOR Policy, 5/5 Dusk test PASS |
-| 5 | Verifikasi & Penilaian Prioritas (Admin) | TODO | Antrean, Setujui/Tolak + Alasan, Riwayat Status |
+| **5** | **Verifikasi & Penilaian Prioritas (Sprint 1)** | **DONE** | PBI 13 (Antrean & Filter Tanggal), PBI 14 (Aksi Terima/Tolak), PBI 15 (Prioritas) |
 | 6 | Disposisi Penugasan & Dokumen PDF | TODO | Surat Tugas Digital & PDF DomPDF |
 | 7 | Pelaksanaan Lapangan oleh Petugas | TODO | Navigasi Koordinat, Foto Bukti Sesudah, Penutupan Tugas |
 | 8 | Tracking Timeline & Peta Publik | TODO | Pelacakan Nomor Tiket & Leaflet Sebaran Terbuka |
@@ -69,12 +69,23 @@ Terakhir diperbarui: 2026-10-12 (Fase 1)
 - [x] Proteksi otorisasi Policy (`LaporanPolicy`) pencegah IDOR.
 - [x] Pengujian Dusk E2E Lapor Warga (`LaporanWargaTest.php`) — **5/5 PASS** (Total Dusk **29/29 PASS**).
 
-### Fase 5: Verifikasi Admin DSDABM (STATUS: TODO)
-- [ ] Antrean verifikasi laporan (filter status, kategori, kecamatan).
-- [ ] Setujui laporan & tentukan prioritas (`rendah`, `sedang`, `tinggi`).
-- [ ] Tolak laporan dengan modal wajib input alasan penolakan.
-- [ ] Pencatatan otomatis ke `riwayat_status`.
-- [ ] Pengujian Dusk E2E Verifikasi.
+### Fase 5 / Sprint 1: Verifikasi & Penilaian Prioritas (STATUS: DONE ✅)
+**Penanggung Jawab: Wahyu Wijaya (102022400125)**
+- [x] **[IFD-14] PBI-13: Daftar Aduan & Filter Multi-Kriteria**
+  - Antrean daftar aduan dengan pencarian kata kunci (nomor tiket/judul/pelapor).
+  - Filter multi-kriteria: status, kategori infrastruktur, kecamatan, dan rentang periode tanggal.
+  - Validasi rentang tanggal (tanggal awal tidak boleh lebih besar dari tanggal akhir).
+  - Paginasi tabel aduan dan tombol detail pemeriksaan laporan.
+- [x] **[IFD-15] PBI-14: Aksi Terima / Tolak Aduan**
+  - Lembar kerja detail aduan: foto bukti kerusakan fisik, koordinat peta Leaflet, dan timeline riwayat status.
+  - Aksi terima aduan valid mengubah status ke `diproses` serta audit log riwayat status.
+  - Aksi tolak aduan tidak valid dengan catatan alasan penolakan wajib (minimal 10 karakter).
+  - Proteksi sistem mencegah verifikasi ulang terhadap laporan yang sudah diproses atau ditolak.
+- [x] **[IFD-16] PBI-15: Penetapan & Pembaruan Skala Prioritas**
+  - Penetapan tingkat prioritas penanganan: Rendah, Sedang, Tinggi saat proses verifikasi.
+  - Aksi pembaruan skala prioritas pada laporan aktif (`status = diproses`).
+  - Proteksi sistem menolak perubahan prioritas pada laporan yang sudah selesai atau ditolak.
+- [x] **Pengujian Otomatis Feature Test (`VerifikasiAdminTest.php`)** mencakup seluruh skenario TC01-01 s/d TC01-12 dan TC02-01 s/d TC02-14 — **18/18 PASS**.
 
 ### Fase 6: Disposisi Penugasan & Surat Tugas PDF (STATUS: TODO)
 - [ ] Migration & Model `disposisi_penugasan`.
