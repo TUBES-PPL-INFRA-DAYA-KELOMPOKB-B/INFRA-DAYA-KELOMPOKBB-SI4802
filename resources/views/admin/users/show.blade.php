@@ -140,27 +140,105 @@
             @endif
         </x-card>
 
-        <!-- Section Riwayat Log Aktivitas (Dependensi PBI-6) -->
+        <!-- Section Riwayat Log Aktivitas (AC 4.3 & PBI-6) -->
         <x-card class="p-6">
             <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
                 <div>
-                    <h3 class="text-base font-bold text-slate-900">Riwayat Log Aktivitas</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Jejak audit perubahan data akun, pergantian peran, dan riwayat login.</p>
+                    <h3 class="text-base font-bold text-slate-900">Riwayat Log Aktivitas Pengguna</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Jejak audit perubahan data akun, pergantian peran, status aktivasi, dan login terkait pengguna ini.</p>
                 </div>
-                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                    Menunggu PBI-6
-                </span>
+                <a href="{{ route('admin.user-logs.index', ['search' => $user->email]) }}" class="text-xs font-semibold text-[#0E7C86] hover:underline flex items-center gap-1">
+                    <span>Lihat Semua Log</span>
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </a>
             </div>
 
-            <div class="py-8 text-center bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
-                <div class="h-10 w-10 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-2">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            @php
+                $logs = $user->userLogs()->with('actor')->take(10)->get();
+                $badgeStyles = [
+                    'account_activated' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    'account_deactivated' => 'bg-rose-50 text-rose-700 border-rose-200',
+                    'role_changed' => 'bg-purple-50 text-purple-700 border-purple-200',
+                    'password_changed' => 'bg-amber-50 text-amber-700 border-amber-200',
+                    'user_created' => 'bg-blue-50 text-blue-700 border-blue-200',
+                    'user_updated' => 'bg-sky-50 text-sky-700 border-sky-200',
+                    'user_deleted' => 'bg-red-50 text-red-700 border-red-200',
+                    'login_success' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    'login_failed' => 'bg-rose-50 text-rose-700 border-rose-200',
+                ];
+                $actionLabels = [
+                    'user_created' => 'Pembuatan Akun',
+                    'user_updated' => 'Pembaruan Data',
+                    'role_changed' => 'Perubahan Role',
+                    'password_changed' => 'Perubahan Password',
+                    'account_activated' => 'Aktivasi Akun',
+                    'account_deactivated' => 'Nonaktivasi Akun',
+                    'user_deleted' => 'Penghapusan Akun',
+                    'login_success' => 'Login Berhasil',
+                    'login_failed' => 'Login Gagal',
+                ];
+            @endphp
+
+            @if($logs->isNotEmpty())
+                <div class="overflow-x-auto -mx-6 -mb-6">
+                    <table class="w-full text-left text-xs text-slate-600" dusk="user-detail-logs-table">
+                        <thead class="bg-slate-50 border-y border-slate-100 font-semibold text-slate-500 uppercase tracking-wider">
+                            <tr>
+                                <th class="px-6 py-3">Waktu</th>
+                                <th class="px-6 py-3">Pelaku</th>
+                                <th class="px-6 py-3">Aksi</th>
+                                <th class="px-6 py-3">Perubahan</th>
+                                <th class="px-6 py-3">Alasan / Catatan</th>
+                                <th class="px-6 py-3">IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach($logs as $log)
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-6 py-3 whitespace-nowrap text-slate-500">
+                                        {{ $log->created_at->format('d M Y H:i') }}
+                                    </td>
+                                    <td class="px-6 py-3 whitespace-nowrap font-medium text-slate-800">
+                                        {{ $log->actor ? $log->actor->name : 'Sistem' }}
+                                    </td>
+                                    <td class="px-6 py-3 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border {{ $badgeStyles[$log->action] ?? 'bg-slate-100 text-slate-700 border-slate-200' }}">
+                                            {{ $actionLabels[$log->action] ?? $log->action }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-3">
+                                        @if($log->action === 'role_changed')
+                                            <span class="font-mono text-slate-400 line-through">{{ $log->old_value['role'] ?? '-' }}</span> → <span class="font-mono font-bold text-purple-700">{{ $log->new_value['role'] ?? '-' }}</span>
+                                        @elseif($log->action === 'account_activated' || $log->action === 'account_deactivated')
+                                            <span>Status diubah ke <strong>{{ $log->action === 'account_activated' ? 'Aktif' : 'Nonaktif' }}</strong></span>
+                                        @elseif($log->action === 'password_changed')
+                                            <span class="text-amber-700 font-medium">Password diperbarui</span>
+                                        @elseif($log->action === 'user_created')
+                                            <span class="text-blue-700 font-medium">Akun didaftarkan</span>
+                                        @elseif($log->action === 'login_success')
+                                            <span class="text-emerald-700">Autentikasi berhasil</span>
+                                        @elseif($log->action === 'login_failed')
+                                            <span class="text-rose-600">Percobaan login ditolak</span>
+                                        @else
+                                            <span class="text-slate-400">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-3 text-slate-500 max-w-xs truncate">
+                                        {{ $log->reason ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-3 font-mono text-slate-400 whitespace-nowrap">
+                                        {{ $log->ip_address ?? '-' }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
-                <h4 class="text-sm font-semibold text-slate-700">Modul Log Aktivitas & Jejak Audit</h4>
-                <p class="text-xs text-slate-500 max-w-md mx-auto mt-1">
-                    Pencatatan riwayat aktivasi, perubahan role, dan jejak aktivitas CRUD pengguna akan diintegrasikan secara penuh pada implementasi <strong>PBI-6 (Pencatatan Aktivasi + Log)</strong>.
-                </p>
-            </div>
+            @else
+                <div class="py-8 text-center bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
+                    <p class="text-xs text-slate-500">Belum ada riwayat aktivitas tercatat untuk akun pengguna ini.</p>
+                </div>
+            @endif
         </x-card>
     </div>
 </x-admin-layout>

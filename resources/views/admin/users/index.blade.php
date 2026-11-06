@@ -118,6 +118,7 @@
                                             @method('PATCH')
                                             <button
                                                 type="submit"
+                                                dusk="toggle-active-btn-{{ $user->id }}"
                                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors {{ $user->is_active ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 hover:bg-rose-100' }}"
                                                 title="Klik untuk mengubah status aktif"
                                             >

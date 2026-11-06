@@ -42,13 +42,14 @@ class UserLogService
     }
 
     /**
-     * AC 6.4: Mendapatkan daftar log berpaginasi dengan filter urutan terbaru, aksi, user, dan rentang tanggal.
+     * AC 6.4, 6.6: Mendapatkan daftar log berpaginasi dengan filter urutan terbaru, aksi, user, pencarian nama/email, dan rentang tanggal.
      */
     public function getPaginatedLogs(
         ?string $action = null,
         ?int $userId = null,
         ?string $startDate = null,
         ?string $endDate = null,
+        ?string $search = null,
         int $perPage = 15
     ): LengthAwarePaginator {
         return UserLog::with(['actor', 'targetUser'])
@@ -59,6 +60,20 @@ class UserLogService
                 $query->where(function ($q) use ($userId) {
                     $q->where('target_user_id', $userId)
                         ->orWhere('actor_id', $userId);
+                });
+            })
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('targetUser', function ($sub) use ($search) {
+                        $sub->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })->orWhereHas('actor', function ($sub) use ($search) {
+                        $sub->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })->orWhere('old_value->name', 'like', "%{$search}%")
+                      ->orWhere('old_value->email', 'like', "%{$search}%")
+                      ->orWhere('new_value->name', 'like', "%{$search}%")
+                      ->orWhere('new_value->email', 'like', "%{$search}%");
                 });
             })
             ->when($startDate, function ($query, $startDate) {

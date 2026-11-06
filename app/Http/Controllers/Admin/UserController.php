@@ -96,7 +96,7 @@ class UserController extends Controller
         return redirect()->back()->with('success', "Peran pengguna {$user->name} berhasil diubah menjadi {$user->role}.");
     }
 
-    public function toggleActive(int $id): RedirectResponse
+    public function toggleActive(Request $request, int $id): RedirectResponse
     {
         if (auth()->id() === $id) {
             return redirect()
@@ -105,7 +105,7 @@ class UserController extends Controller
         }
 
         try {
-            $user = $this->userService->toggleUserStatus($id);
+            $user = $this->userService->toggleUserStatus($id, $request->input('reason'));
         } catch (\DomainException $e) {
             return redirect()
                 ->route('admin.users.index')

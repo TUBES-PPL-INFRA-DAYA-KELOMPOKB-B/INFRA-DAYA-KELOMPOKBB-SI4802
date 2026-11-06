@@ -137,7 +137,7 @@ class UserManagementCrudTest extends TestCase
         $response->assertSee('Petugas Lapangan Teladan');
         $response->assertSee('petugas.teladan@dsdabm.bandung.go.id');
         $response->assertSee('Petugas Lapangan');
-        $response->assertSee('Menunggu PBI-6');
+        $response->assertSee('Riwayat Log Aktivitas');
     }
 
     /**

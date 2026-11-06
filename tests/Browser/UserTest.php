@@ -209,7 +209,7 @@ class UserTest extends DuskTestCase
                 ->assertSee('Detail Pengguna')
                 ->assertSee($targetUser->name)
                 ->assertSee('Petugas Lapangan')
-                ->assertSee('Menunggu PBI-6');
+                ->assertSee('Riwayat Log Aktivitas Pengguna');
         });
     }
 

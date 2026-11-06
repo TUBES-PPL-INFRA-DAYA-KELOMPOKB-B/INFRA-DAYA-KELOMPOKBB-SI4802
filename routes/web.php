@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\KecamatanController;
 use App\Http\Controllers\Admin\KelurahanController;
 use App\Http\Controllers\Admin\RekapController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\UserLogController;
 use App\Http\Controllers\Admin\VerifikasiController;
 use App\Http\Controllers\Api\WilayahController;
 use App\Http\Controllers\DashboardController;
@@ -68,6 +69,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('kelurahan', KelurahanController::class)->except(['show']);
         Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
         Route::patch('users/{user}/role', [UserController::class, 'updateRole'])->name('users.update-role');
+        Route::get('user-logs', [UserLogController::class, 'index'])->name('user-logs.index');
         Route::resource('users', UserController::class);
         Route::resource('kategori', KategoriController::class)->except(['show']);
         // Fase 5: Verifikasi & Penilaian Prioritas
