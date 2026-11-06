@@ -56,7 +56,8 @@ class LaporanService
     public function createLaporan(int $wargaId, array $data, UploadedFile $foto): LaporanKerusakan
     {
         return DB::transaction(function () use ($wargaId, $data, $foto) {
-            $path = FileUploadService::storePublicFile($foto, 'laporan/sebelum');
+            $filename = Str::random(40).'.'.$foto->getClientOriginalExtension();
+            $path = $foto->storeAs('laporan/sebelum', $filename, 'public');
 
             $laporan = LaporanKerusakan::create([
                 'nomor_tiket' => $this->generateNomorTiket(),
@@ -88,9 +89,10 @@ class LaporanService
         return DB::transaction(function () use ($laporan, $data, $foto) {
             if ($foto) {
                 if ($laporan->foto_bukti_sebelum) {
-                    FileUploadService::deletePublicFile($laporan->foto_bukti_sebelum);
+                    Storage::disk('public')->delete($laporan->foto_bukti_sebelum);
                 }
-                $data['foto_bukti_sebelum'] = FileUploadService::storePublicFile($foto, 'laporan/sebelum');
+                $filename = Str::random(40).'.'.$foto->getClientOriginalExtension();
+                $data['foto_bukti_sebelum'] = $foto->storeAs('laporan/sebelum', $filename, 'public');
             }
 
             $laporan->update([
@@ -118,7 +120,7 @@ class LaporanService
     {
         return DB::transaction(function () use ($laporan) {
             if ($laporan->foto_bukti_sebelum) {
-                FileUploadService::deletePublicFile($laporan->foto_bukti_sebelum);
+                Storage::disk('public')->delete($laporan->foto_bukti_sebelum);
             }
 
             return $laporan->delete();
@@ -126,13 +128,15 @@ class LaporanService
     }
 
     /**
-     * Mengambil daftar laporan untuk antrean verifikasi admin dengan filter.
+     * Mengambil daftar laporan untuk antrean verifikasi admin dengan filter multi-kriteria (PBI-13).
      */
     public function getPaginatedLaporanAdmin(
         ?string $search = null,
         ?string $status = null,
         ?int $kategoriId = null,
         ?int $kecamatanId = null,
+        ?string $tanggalMulai = null,
+        ?string $tanggalAkhir = null,
         int $perPage = 10
     ): LengthAwarePaginator {
         return LaporanKerusakan::with(['warga', 'kategori', 'kelurahan.kecamatan'])
@@ -152,21 +156,30 @@ class LaporanService
             ->when($kecamatanId, function ($query, $kecamatanId) {
                 $query->whereHas('kelurahan', fn ($kq) => $kq->where('kecamatan_id', $kecamatanId));
             })
+            ->when($tanggalMulai, function ($query, $tanggalMulai) {
+                $query->whereDate('created_at', '>=', $tanggalMulai);
+            })
+            ->when($tanggalAkhir, function ($query, $tanggalAkhir) {
+                $query->whereDate('created_at', '<=', $tanggalAkhir);
+            })
             ->orderByRaw("CASE WHEN status = 'menunggu_verifikasi' THEN 0 ELSE 1 END")
             ->orderBy('created_at', 'desc')
             ->paginate($perPage)
             ->withQueryString();
     }
 
+    /**
+     * Mengambil detail laporan kerusakan untuk keperluan verifikasi (PBI-14).
+     */
     public function findLaporan(int $id): LaporanKerusakan
     {
-        return LaporanKerusakan::with(['warga', 'kategori', 'kelurahan.kecamatan', 'riwayatStatus.user', 'disposisi.petugas'])->findOrFail($id);
+        return LaporanKerusakan::with(['warga', 'kategori', 'kelurahan.kecamatan', 'riwayatStatus.user'])->findOrFail($id);
     }
 
     /**
-     * Menyetujui laporan kerusakan oleh Admin DSDABM.
+     * Menerima / menyetujui laporan kerusakan oleh Admin DSDABM (PBI-14).
      */
-    public function setujuiLaporan(int $id, int $adminId, string $prioritas, ?string $catatan = null): LaporanKerusakan
+    public function setujuiLaporan(int $id, int $adminId, ?string $prioritas = 'sedang', ?string $catatan = null): LaporanKerusakan
     {
         return DB::transaction(function () use ($id, $adminId, $prioritas, $catatan) {
             $laporan = LaporanKerusakan::lockForUpdate()->findOrFail($id);
@@ -175,13 +188,18 @@ class LaporanService
                 throw new \InvalidArgumentException('Hanya laporan dengan status Menunggu Verifikasi yang dapat disetujui.');
             }
 
+            $prio = $prioritas ?: ($laporan->prioritas ?: 'sedang');
+
             $laporan->update([
                 'status' => 'diproses',
-                'prioritas' => $prioritas,
+                'prioritas' => $prio,
                 'alasan_penolakan' => null,
             ]);
 
-            $keterangan = 'Laporan disetujui oleh Admin DSDABM dengan prioritas: '.ucfirst($prioritas).'.';
+            $keterangan = 'Laporan disetujui oleh Admin DSDABM.';
+            if ($prioritas) {
+                $keterangan .= ' Prioritas ditetapkan: ' . ucfirst($prio) . '.';
+            }
             if ($catatan) {
                 $keterangan .= " Catatan verifikator: {$catatan}";
             }
@@ -198,7 +216,7 @@ class LaporanService
     }
 
     /**
-     * Menolak laporan kerusakan oleh Admin DSDABM dengan alasan konkret.
+     * Menolak laporan kerusakan oleh Admin DSDABM dengan alasan konkret (PBI-14).
      */
     public function tolakLaporan(int $id, int $adminId, string $alasan): LaporanKerusakan
     {
@@ -219,6 +237,39 @@ class LaporanService
                 'user_id' => $adminId,
                 'status' => 'ditolak',
                 'keterangan' => "Laporan ditolak oleh Admin DSDABM. Alasan: {$alasan}",
+            ]);
+
+            return $laporan;
+        });
+    }
+
+    /**
+     * Memperbarui tingkat prioritas penanganan laporan kerusakan aktif (PBI-15).
+     */
+    public function updatePrioritasLaporan(int $id, int $adminId, string $prioritas): LaporanKerusakan
+    {
+        $validPrioritas = ['rendah', 'sedang', 'tinggi'];
+        if (! in_array(strtolower($prioritas), $validPrioritas, true)) {
+            throw new \InvalidArgumentException('Tingkat prioritas harus salah satu dari: Rendah, Sedang, atau Tinggi.');
+        }
+
+        return DB::transaction(function () use ($id, $adminId, $prioritas) {
+            $laporan = LaporanKerusakan::lockForUpdate()->findOrFail($id);
+
+            // Tolak perubahan prioritas jika laporan sudah selesai atau ditolak (AC02-11)
+            if (in_array($laporan->status, ['selesai', 'ditolak'], true)) {
+                throw new \InvalidArgumentException('Laporan yang sudah berstatus Selesai atau Ditolak tidak dapat diubah prioritasnya.');
+            }
+
+            $laporan->update([
+                'prioritas' => strtolower($prioritas),
+            ]);
+
+            RiwayatStatus::create([
+                'laporan_id' => $laporan->id,
+                'user_id' => $adminId,
+                'status' => $laporan->status,
+                'keterangan' => 'Tingkat prioritas penanganan diperbarui menjadi: ' . ucfirst($prioritas) . '.',
             ]);
 
             return $laporan;
