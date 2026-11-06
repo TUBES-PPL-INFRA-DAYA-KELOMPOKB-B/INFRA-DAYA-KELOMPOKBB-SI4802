@@ -128,8 +128,9 @@ class DisposisiController extends Controller
     public function cetakPdf(int $id, Request $request): Response
     {
         $disposisi = $this->disposisiService->findDisposisi($id);
+        $waktuDokumen = \Illuminate\Support\Carbon::now();
 
-        $pdf = Pdf::loadView('admin.disposisi.pdf', compact('disposisi'))
+        $pdf = Pdf::loadView('admin.surat-tugas.pdf', compact('disposisi', 'waktuDokumen'))
             ->setPaper('a4', 'portrait');
 
         $filename = "SPT-{$disposisi->nomor_surat_tugas}.pdf";

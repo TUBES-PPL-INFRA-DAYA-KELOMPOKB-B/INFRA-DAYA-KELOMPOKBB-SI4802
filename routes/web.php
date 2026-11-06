@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\KecamatanController;
 use App\Http\Controllers\Admin\KelurahanController;
 use App\Http\Controllers\Admin\PetugasController;
 use App\Http\Controllers\Admin\RekapController;
+use App\Http\Controllers\Admin\SuratTugasController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VerifikasiController;
 use App\Http\Controllers\Api\WilayahController;
@@ -88,6 +89,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/disposisi', [DisposisiController::class, 'store'])->name('disposisi.store');
         Route::get('/disposisi/{id}', [DisposisiController::class, 'show'])->name('disposisi.show');
         Route::get('/disposisi/{id}/pdf', [DisposisiController::class, 'cetakPdf'])->name('disposisi.pdf');
+        // PBI-18: Pencetakan Surat Tugas (IFD-17)
+        Route::get('/surat-tugas', [SuratTugasController::class, 'index'])->name('surat-tugas.index');
+        Route::get('/surat-tugas/{id}', [SuratTugasController::class, 'show'])->name('surat-tugas.show');
+        Route::get('/surat-tugas/{id}/pdf', [SuratTugasController::class, 'pdf'])->name('surat-tugas.pdf');
+        Route::get('/surat-tugas/{id}/cetak', [SuratTugasController::class, 'cetak'])->name('surat-tugas.cetak');
         // Fase 11: Rekapitulasi Data & Ekspor
         Route::get('/rekap', [RekapController::class, 'index'])->name('rekap.index');
         Route::get('/rekap/excel', [RekapController::class, 'exportExcel'])->name('rekap.excel');
