@@ -11,6 +11,40 @@ class LaporanKerusakanRequest extends FormRequest
         return auth()->check() && auth()->user()->isWarga();
     }
 
+    /**
+     * Sanitasi input form sebelum validasi untuk mencegah stored XSS (NFR-02).
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('judul')) {
+            $this->merge([
+                'judul' => $this->sanitizeInput($this->input('judul')),
+            ]);
+        }
+
+        if ($this->has('deskripsi_kondisi')) {
+            $this->merge([
+                'deskripsi_kondisi' => $this->sanitizeInput($this->input('deskripsi_kondisi')),
+            ]);
+        }
+    }
+
+    private function sanitizeInput(?string $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        // Hapus elemen script & style beserta isinya
+        $clean = preg_replace('#<script\b[^>]*>(.*?)<\/script>#is', '', $value);
+        $clean = preg_replace('#<style\b[^>]*>(.*?)<\/style>#is', '', $clean);
+
+        // Hapus seluruh tag HTML lainnya
+        $clean = strip_tags($clean);
+
+        return trim($clean);
+    }
+
     public function rules(): array
     {
         $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
@@ -18,15 +52,15 @@ class LaporanKerusakanRequest extends FormRequest
         return [
             'judul' => ['required', 'string', 'max:150'],
             'kategori_id' => ['required', 'exists:kategori_infrastruktur,id'],
-            'kelurahan_id' => ['required', 'exists:kelurahan,id'],
+            'kelurahan_id' => ['nullable', 'exists:kelurahan,id'],
             'deskripsi_kondisi' => ['required', 'string', 'max:2000'],
-            'latitude' => ['required', 'numeric', 'between:-7.05000000,-6.80000000'],
-            'longitude' => ['required', 'numeric', 'between:107.50000000,107.80000000'],
+            'latitude' => ['nullable', 'numeric', 'between:-7.05000000,-6.80000000'],
+            'longitude' => ['nullable', 'numeric', 'between:107.50000000,107.80000000'],
             'foto_bukti_sebelum' => [
                 $isUpdate ? 'nullable' : 'required',
                 'image',
                 'mimes:jpg,jpeg,png',
-                'max:5120', // Maksimal 5MB sesuai spesifikasi
+                'max:5120', // Maksimal 5MB sesuai standar keamanan NFR-02
             ],
         ];
     }

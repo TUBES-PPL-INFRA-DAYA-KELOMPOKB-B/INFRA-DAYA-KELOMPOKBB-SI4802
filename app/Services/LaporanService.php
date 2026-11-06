@@ -2,14 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Kelurahan;
 use App\Models\LaporanKerusakan;
 use App\Models\RiwayatStatus;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class LaporanService
 {
@@ -58,15 +57,19 @@ class LaporanService
         return DB::transaction(function () use ($wargaId, $data, $foto) {
             $path = FileUploadService::storePublicFile($foto, 'laporan/sebelum');
 
+            $kelurahanId = $data['kelurahan_id'] ?? Kelurahan::value('id');
+            $latitude = $data['latitude'] ?? -6.91746400;
+            $longitude = $data['longitude'] ?? 107.61912300;
+
             $laporan = LaporanKerusakan::create([
                 'nomor_tiket' => $this->generateNomorTiket(),
                 'warga_id' => $wargaId,
-                'kelurahan_id' => $data['kelurahan_id'],
+                'kelurahan_id' => $kelurahanId,
                 'kategori_id' => $data['kategori_id'],
                 'judul' => $data['judul'],
                 'deskripsi_kondisi' => $data['deskripsi_kondisi'],
-                'latitude' => $data['latitude'],
-                'longitude' => $data['longitude'],
+                'latitude' => $latitude,
+                'longitude' => $longitude,
                 'foto_bukti_sebelum' => $path,
                 'status' => 'menunggu_verifikasi',
                 'prioritas' => 'sedang',
