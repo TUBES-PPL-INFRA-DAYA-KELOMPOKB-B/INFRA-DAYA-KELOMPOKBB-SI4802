@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\KategoriController;
 use App\Http\Controllers\Admin\KecamatanController;
 use App\Http\Controllers\Admin\KelurahanController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\VerifikasiController;
 use App\Http\Controllers\Api\WilayahController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Warga\LaporanController;
@@ -60,7 +61,8 @@ Route::middleware('auth')->group(function () {
         Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
         Route::resource('users', UserController::class)->except(['show']);
         Route::resource('kategori', KategoriController::class)->except(['show']);
-        Route::get('/verifikasi', fn () => redirect()->route('dashboard'))->name('verifikasi.index');
+        // PBI-13: Daftar Aduan & Filter Laporan Masuk
+        Route::get('/verifikasi', [VerifikasiController::class, 'index'])->name('verifikasi.index');
         Route::get('/disposisi', fn () => redirect()->route('dashboard'))->name('disposisi.index');
         Route::get('/rekap', fn () => redirect()->route('dashboard'))->name('rekap.index');
     });

@@ -126,4 +126,45 @@ class LaporanService
             return $laporan->delete();
         });
     }
+
+    /**
+     * Mengambil daftar laporan untuk antrean verifikasi admin dengan filter multi-kriteria (PBI-13).
+     */
+    public function getPaginatedLaporanAdmin(
+        ?string $search = null,
+        ?string $status = null,
+        ?int $kategoriId = null,
+        ?int $kecamatanId = null,
+        ?string $tanggalMulai = null,
+        ?string $tanggalAkhir = null,
+        int $perPage = 10
+    ): LengthAwarePaginator {
+        return LaporanKerusakan::with(['warga', 'kategori', 'kelurahan.kecamatan'])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nomor_tiket', 'like', "%{$search}%")
+                        ->orWhere('judul', 'like', "%{$search}%")
+                        ->orWhereHas('warga', fn ($uq) => $uq->where('name', 'like', "%{$search}%"));
+                });
+            })
+            ->when($status, function ($query, $status) {
+                $query->where('status', $status);
+            })
+            ->when($kategoriId, function ($query, $kategoriId) {
+                $query->where('kategori_id', $kategoriId);
+            })
+            ->when($kecamatanId, function ($query, $kecamatanId) {
+                $query->whereHas('kelurahan', fn ($kq) => $kq->where('kecamatan_id', $kecamatanId));
+            })
+            ->when($tanggalMulai, function ($query, $tanggalMulai) {
+                $query->whereDate('created_at', '>=', $tanggalMulai);
+            })
+            ->when($tanggalAkhir, function ($query, $tanggalAkhir) {
+                $query->whereDate('created_at', '<=', $tanggalAkhir);
+            })
+            ->orderByRaw("CASE WHEN status = 'menunggu_verifikasi' THEN 0 ELSE 1 END")
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->withQueryString();
+    }
 }
