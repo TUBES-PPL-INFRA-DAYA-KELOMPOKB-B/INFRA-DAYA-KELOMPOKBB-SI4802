@@ -59,6 +59,7 @@
                                 <th class="px-6 py-3.5">Nama Kategori</th>
                                 <th class="px-6 py-3.5">Deskripsi Masalah</th>
                                 <th class="px-6 py-3.5">Bobot Prioritas</th>
+                                <th class="px-6 py-3.5 text-center">Jumlah Laporan</th>
                                 <th class="px-6 py-3.5 text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -73,7 +74,7 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         @if($kategori->bobot_prioritas === 3)
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
                                                 <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
                                                 Tinggi (Bobot 3)
                                             </span>
@@ -88,6 +89,11 @@
                                                 Rendah (Bobot 1)
                                             </span>
                                         @endif
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ ($kategori->laporan_count ?? 0) > 0 ? 'bg-teal-50 text-[#0E7C86] border border-teal-200' : 'bg-slate-100 text-slate-600 border border-slate-200' }}">
+                                            {{ $kategori->laporan_count ?? 0 }} Laporan
+                                        </span>
                                     </td>
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex items-center justify-end gap-2">

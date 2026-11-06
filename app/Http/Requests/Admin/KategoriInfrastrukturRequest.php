@@ -25,6 +25,16 @@ class KategoriInfrastrukturRequest extends FormRequest
                 'string',
                 'max:100',
                 Rule::unique('kategori_infrastruktur', 'nama_kategori')->ignore($kategoriId),
+                function (string $attribute, mixed $value, \Closure $fail) use ($kategoriId): void {
+                    $exists = \App\Models\KategoriInfrastruktur::query()
+                        ->whereRaw('LOWER(nama_kategori) = ?', [mb_strtolower(trim((string) $value))])
+                        ->when($kategoriId, fn ($q) => $q->where('id', '!=', $kategoriId))
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('Nama kategori sudah digunakan.');
+                    }
+                },
             ],
             'deskripsi' => ['nullable', 'string', 'max:500'],
             'bobot_prioritas' => ['required', 'integer', 'in:1,2,3'],
@@ -35,7 +45,7 @@ class KategoriInfrastrukturRequest extends FormRequest
     {
         return [
             'nama_kategori.required' => 'Nama kategori wajib diisi.',
-            'nama_kategori.unique' => 'Kategori tersebut sudah terdaftar.',
+            'nama_kategori.unique' => 'Nama kategori sudah digunakan.',
             'nama_kategori.max' => 'Nama kategori maksimal 100 karakter.',
             'deskripsi.max' => 'Deskripsi maksimal 500 karakter.',
             'bobot_prioritas.required' => 'Bobot prioritas wajib dipilih.',

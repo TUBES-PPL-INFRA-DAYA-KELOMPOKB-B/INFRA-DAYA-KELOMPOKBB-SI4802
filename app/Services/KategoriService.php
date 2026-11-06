@@ -14,6 +14,7 @@ class KategoriService
     public function getPaginatedKategori(?string $search = null, int $perPage = 10): LengthAwarePaginator
     {
         return KategoriInfrastruktur::query()
+            ->withCount('laporan')
             ->when($search, function ($query, $search) {
                 $query->where('nama_kategori', 'like', "%{$search}%")
                     ->orWhere('deskripsi', 'like', "%{$search}%");
@@ -54,6 +55,10 @@ class KategoriService
     {
         $kategori = KategoriInfrastruktur::findOrFail($id);
 
-        return $kategori->delete();
+        if ($kategori->laporan()->exists()) {
+            throw new \DomainException('Kategori tidak dapat dihapus karena masih digunakan oleh laporan kerusakan.');
+        }
+
+        return (bool) $kategori->delete();
     }
 }

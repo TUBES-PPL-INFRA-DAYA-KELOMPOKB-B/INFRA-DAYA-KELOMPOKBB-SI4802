@@ -53,10 +53,16 @@ class KategoriController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
-        $this->kategoriService->deleteKategori($id);
+        try {
+            $this->kategoriService->deleteKategori($id);
 
-        return redirect()
-            ->route('admin.kategori.index')
-            ->with('success', 'Kategori infrastruktur berhasil dihapus.');
+            return redirect()
+                ->route('admin.kategori.index')
+                ->with('success', 'Kategori infrastruktur berhasil dihapus.');
+        } catch (\DomainException $e) {
+            return redirect()
+                ->route('admin.kategori.index')
+                ->with('error', $e->getMessage());
+        }
     }
 }
