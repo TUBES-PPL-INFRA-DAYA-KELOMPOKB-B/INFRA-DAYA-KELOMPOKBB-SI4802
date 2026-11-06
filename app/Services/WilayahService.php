@@ -56,6 +56,10 @@ class WilayahService
     {
         $kecamatan = Kecamatan::findOrFail($id);
 
+        if ($kecamatan->kelurahan()->exists()) {
+            throw new \RuntimeException('Kecamatan tidak dapat dihapus karena masih memiliki data kelurahan.');
+        }
+
         return $kecamatan->delete();
     }
 

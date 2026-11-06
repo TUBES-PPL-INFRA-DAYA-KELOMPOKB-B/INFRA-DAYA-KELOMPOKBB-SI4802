@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('kelurahan', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('kecamatan_id')->constrained('kecamatan')->cascadeOnDelete();
-            $table->string('kode_kelurahan', 20)->unique();
+            $table->foreignId('kecamatan_id')->constrained('kecamatan')->restrictOnDelete();
+            $table->string('kode_kelurahan', 10)->unique();
             $table->string('nama_kelurahan', 100);
             $table->timestamps();
         });

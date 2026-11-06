@@ -16,8 +16,9 @@
                 <x-form-input
                     name="kode_kecamatan"
                     label="Kode Kecamatan"
-                    placeholder="Contoh: 32.73.01"
+                    placeholder="Contoh: 327301"
                     :value="old('kode_kecamatan', $kecamatan->kode_kecamatan)"
+                    maxlength="10"
                     required
                 />
 
@@ -26,6 +27,7 @@
                     label="Nama Kecamatan"
                     placeholder="Contoh: Andir"
                     :value="old('nama_kecamatan', $kecamatan->nama_kecamatan)"
+                    maxlength="100"
                     required
                 />
 

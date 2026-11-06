@@ -53,10 +53,16 @@ class KecamatanController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
-        $this->wilayahService->deleteKecamatan($id);
+        try {
+            $this->wilayahService->deleteKecamatan($id);
 
-        return redirect()
-            ->route('admin.kecamatan.index')
-            ->with('success', 'Kecamatan beserta seluruh kelurahan terkait berhasil dihapus.');
+            return redirect()
+                ->route('admin.kecamatan.index')
+                ->with('success', 'Data kecamatan berhasil dihapus.');
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('admin.kecamatan.index')
+                ->with('error', $e->getMessage());
+        }
     }
 }

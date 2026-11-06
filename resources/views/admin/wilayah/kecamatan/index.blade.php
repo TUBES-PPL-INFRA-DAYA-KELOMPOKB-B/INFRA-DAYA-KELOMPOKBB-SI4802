@@ -102,7 +102,7 @@
                                         <x-modal-confirm
                                             id="delete-kecamatan-{{ $kecamatan->id }}"
                                             title="Hapus Kecamatan {{ $kecamatan->nama_kecamatan }}"
-                                            message="Apakah Anda yakin ingin menghapus data Kecamatan {{ $kecamatan->nama_kecamatan }} ({{ $kecamatan->kode_kecamatan }})? Semua kelurahan di bawah kecamatan ini juga akan terhapus."
+                                            message="{{ $kecamatan->kelurahan_count > 0 ? 'Peringatan: Kecamatan ' . $kecamatan->nama_kecamatan . ' masih memiliki ' . $kecamatan->kelurahan_count . ' kelurahan. Penghapusan akan ditolak sistem sebelum seluruh kelurahan dihapus/dipindahkan.' : 'Apakah Anda yakin ingin menghapus data Kecamatan ' . $kecamatan->nama_kecamatan . ' (' . $kecamatan->kode_kecamatan . ')?' }}"
                                             confirm-text="Ya, Hapus Sekarang"
                                             confirm-variant="danger"
                                             method="DELETE"

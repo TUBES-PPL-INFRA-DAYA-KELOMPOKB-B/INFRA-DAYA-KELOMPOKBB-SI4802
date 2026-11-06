@@ -15,10 +15,11 @@
                 <x-form-input
                     name="kode_kecamatan"
                     label="Kode Kecamatan"
-                    placeholder="Contoh: 32.73.01"
+                    placeholder="Contoh: 327301"
                     :value="old('kode_kecamatan')"
+                    maxlength="10"
                     required
-                    help="Format standar wilayah administrasi pemerintahan (misal: 32.73.xx)"
+                    help="Format standar wilayah administrasi pemerintahan (maks. 10 karakter, misal: 327301)"
                 />
 
                 <x-form-input
@@ -26,8 +27,9 @@
                     label="Nama Kecamatan"
                     placeholder="Contoh: Andir"
                     :value="old('nama_kecamatan')"
+                    maxlength="100"
                     required
-                    help="Nama resmi kecamatan tanpa singkatan"
+                    help="Nama resmi kecamatan tanpa singkatan (maks. 100 karakter)"
                 />
 
                 <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
