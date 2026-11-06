@@ -58,6 +58,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/laporan/{laporan}/edit', [LaporanController::class, 'edit'])->name('laporan.edit');
         Route::put('/laporan/{laporan}', [LaporanController::class, 'update'])->name('laporan.update');
         Route::delete('/laporan/{laporan}', [LaporanController::class, 'destroy'])->name('laporan.destroy');
+        Route::post('/laporan/{laporan}/batal', [LaporanController::class, 'destroy'])->name('laporan.batal');
         Route::post('/laporan/{laporan}/umpan-balik', [UmpanBalikController::class, 'store'])->name('laporan.umpan-balik');
     });
 

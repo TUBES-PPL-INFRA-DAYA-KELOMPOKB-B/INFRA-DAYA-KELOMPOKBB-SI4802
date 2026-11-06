@@ -93,6 +93,10 @@ class LaporanService
 
     public function updateLaporan(LaporanKerusakan $laporan, array $data, ?UploadedFile $foto = null): LaporanKerusakan
     {
+        if (! $laporan->canBeModifiedByWarga()) {
+            throw new \DomainException('Laporan kerusakan tidak dapat diubah karena status bukan menunggu verifikasi.');
+        }
+
         return DB::transaction(function () use ($laporan, $data, $foto) {
             if ($foto) {
                 if ($laporan->foto_bukti_sebelum) {
@@ -127,15 +131,37 @@ class LaporanService
         });
     }
 
-    public function deleteLaporan(LaporanKerusakan $laporan): bool
+    /**
+     * Membatalkan pengajuan laporan oleh pelapor (PBI-9).
+     */
+    public function cancelLaporan(LaporanKerusakan $laporan, string $alasanPembatalan, ?int $userId = null): LaporanKerusakan
     {
-        return DB::transaction(function () use ($laporan) {
-            if ($laporan->foto_bukti_sebelum) {
-                FileUploadService::deletePublicFile($laporan->foto_bukti_sebelum);
-            }
+        if (! $laporan->canBeCancelledByWarga()) {
+            throw new \DomainException('Laporan kerusakan tidak dapat dibatalkan karena status bukan menunggu verifikasi.');
+        }
 
-            return $laporan->delete();
+        return DB::transaction(function () use ($laporan, $alasanPembatalan, $userId) {
+            $laporan->update([
+                'status' => 'dibatalkan',
+                'alasan_pembatalan' => trim($alasanPembatalan),
+            ]);
+
+            RiwayatStatus::create([
+                'laporan_id' => $laporan->id,
+                'user_id' => $userId ?? $laporan->warga_id,
+                'status' => 'dibatalkan',
+                'keterangan' => 'Laporan dibatalkan oleh pelapor. Alasan: '.trim($alasanPembatalan),
+            ]);
+
+            return $laporan;
         });
+    }
+
+    public function deleteLaporan(LaporanKerusakan $laporan, ?string $alasan = null, ?int $userId = null): bool
+    {
+        $this->cancelLaporan($laporan, $alasan ?? 'Dibatalkan oleh pelapor.', $userId);
+
+        return true;
     }
 
     /**

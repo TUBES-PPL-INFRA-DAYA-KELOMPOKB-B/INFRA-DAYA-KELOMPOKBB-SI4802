@@ -33,6 +33,14 @@ class LaporanPolicy
      */
     public function delete(User $user, LaporanKerusakan $laporan): bool
     {
-        return (int) $laporan->warga_id === (int) $user->id && $laporan->canBeModifiedByWarga();
+        return (int) $laporan->warga_id === (int) $user->id && $laporan->canBeCancelledByWarga();
+    }
+
+    /**
+     * Alias kebijakan untuk aksi pembatalan tiket laporan.
+     */
+    public function cancel(User $user, LaporanKerusakan $laporan): bool
+    {
+        return (int) $laporan->warga_id === (int) $user->id && $laporan->canBeCancelledByWarga();
     }
 }

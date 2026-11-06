@@ -207,4 +207,123 @@ class LaporanWargaTest extends DuskTestCase
                 ->assertSee('403');
         });
     }
+
+    /**
+     * PBI-9: Warga dapat mengubah judul dan deskripsi laporan miliknya saat status 'menunggu_verifikasi'.
+     */
+    public function test_warga_can_edit_own_report_description_and_title(): void
+    {
+        $data = $this->createSetupData();
+
+        $laporan = LaporanKerusakan::factory()->create([
+            'nomor_tiket' => 'INFRA-20261107-0101',
+            'warga_id' => $data['warga']->id,
+            'kelurahan_id' => $data['kelurahan']->id,
+            'kategori_id' => $data['kategori']->id,
+            'judul' => 'Judul Awal Sebelum Diubah',
+            'deskripsi_kondisi' => 'Deskripsi kondisi awal sebelum proses editing.',
+            'latitude' => -6.91746400,
+            'longitude' => 107.61912300,
+            'foto_bukti_sebelum' => 'laporan/sebelum/sample.jpg',
+            'status' => 'menunggu_verifikasi',
+        ]);
+
+        $this->browse(function (Browser $browser) use ($data, $laporan) {
+            $browser->loginAs($data['warga'])
+                ->visit(route('warga.laporan.edit', $laporan->id))
+                ->assertSee($laporan->nomor_tiket)
+                ->clear('judul')
+                ->type('judul', 'Judul Telah Diperbarui Oleh Warga')
+                ->clear('deskripsi_kondisi')
+                ->type('deskripsi_kondisi', 'Deskripsi kondisi terkini: lubang jalan telah meluas ke jalur sebelah kanan.')
+                ->click('@submit-btn')
+                ->waitForText('Perubahan laporan kerusakan berhasil disimpan')
+                ->assertSee('Judul Telah Diperbarui Oleh Warga')
+                ->assertSee('lubang jalan telah meluas ke jalur sebelah kanan');
+
+            $this->assertDatabaseHas('laporan_kerusakan', [
+                'id' => $laporan->id,
+                'judul' => 'Judul Telah Diperbarui Oleh Warga',
+            ]);
+        });
+    }
+
+    /**
+     * PBI-9: Warga dapat membatalkan laporan dengan modal konfirmasi dan isian alasan pembatalan,
+     * serta status visual berubah menjadi 'Dibatalkan' di halaman riwayat.
+     */
+    public function test_warga_can_cancel_own_report_with_reason_modal(): void
+    {
+        $data = $this->createSetupData();
+
+        $laporan = LaporanKerusakan::factory()->create([
+            'nomor_tiket' => 'INFRA-20261107-0202',
+            'warga_id' => $data['warga']->id,
+            'kelurahan_id' => $data['kelurahan']->id,
+            'kategori_id' => $data['kategori']->id,
+            'judul' => 'Laporan Akan Dibatalkan Warga',
+            'deskripsi_kondisi' => 'Kondisi kerusakan jalan yang salah submit.',
+            'latitude' => -6.91746400,
+            'longitude' => 107.61912300,
+            'foto_bukti_sebelum' => 'laporan/sebelum/sample.jpg',
+            'status' => 'menunggu_verifikasi',
+        ]);
+
+        $this->browse(function (Browser $browser) use ($data, $laporan) {
+            $browser->loginAs($data['warga'])
+                ->visit(route('warga.laporan.show', $laporan->id))
+                ->assertSee($laporan->nomor_tiket)
+                ->assertPresent('@btn-open-cancel-modal')
+                ->click('@btn-open-cancel-modal')
+                ->waitFor('@cancel-modal')
+                ->assertSee('Batalkan Pengajuan Laporan?')
+                ->type('@alasan-pembatalan', 'Fasilitas sudah diperbaiki oleh warga secara gotong royong.')
+                ->click('@btn-confirm-cancel')
+                ->waitForLocation('/warga/laporan-saya')
+                ->assertSee('berhasil dibatalkan')
+                ->assertSeeIn('@status-badge-'.$laporan->id, 'Dibatalkan');
+
+            $this->assertDatabaseHas('laporan_kerusakan', [
+                'id' => $laporan->id,
+                'status' => 'dibatalkan',
+                'alasan_pembatalan' => 'Fasilitas sudah diperbaiki oleh warga secara gotong royong.',
+            ]);
+        });
+    }
+
+    /**
+     * PBI-9: Jika status bukan 'menunggu_verifikasi' (misal 'diproses'), tombol aksi dinonaktifkan
+     * dan form edit terkunci (read-only).
+     */
+    public function test_warga_cannot_edit_or_cancel_when_status_is_already_processed(): void
+    {
+        $data = $this->createSetupData();
+
+        $laporan = LaporanKerusakan::factory()->create([
+            'nomor_tiket' => 'INFRA-20261107-0303',
+            'warga_id' => $data['warga']->id,
+            'kelurahan_id' => $data['kelurahan']->id,
+            'kategori_id' => $data['kategori']->id,
+            'judul' => 'Laporan Sudah Diproses Petugas',
+            'deskripsi_kondisi' => 'Kondisi sedang diperbaiki tim DSDABM.',
+            'latitude' => -6.91746400,
+            'longitude' => 107.61912300,
+            'foto_bukti_sebelum' => 'laporan/sebelum/sample.jpg',
+            'status' => 'diproses',
+        ]);
+
+        $this->browse(function (Browser $browser) use ($data, $laporan) {
+            // Pada halaman detail, tombol aksi terkunci / disabled
+            $browser->loginAs($data['warga'])
+                ->visit(route('warga.laporan.show', $laporan->id))
+                ->assertPresent('@btn-edit-disabled')
+                ->assertPresent('@btn-cancel-disabled')
+                ->assertSee('Sedang Diproses');
+
+            // Pada halaman edit, form dalam mode read-only dan tombol submit nonaktif
+            $browser->visit(route('warga.laporan.edit', $laporan->id))
+                ->assertSee('Formulir Terkunci (Read-Only)')
+                ->assertPresent('@submit-btn-disabled');
+        });
+    }
 }

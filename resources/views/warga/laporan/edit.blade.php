@@ -1,10 +1,25 @@
 <x-warga-layout title="Ubah Laporan Kerusakan">
+    @php
+        $isReadOnly = $isReadOnly ?? (! $laporan->canBeModifiedByWarga());
+    @endphp
+
     <div class="max-w-4xl mx-auto space-y-6">
         <!-- Header -->
         <div class="border-b border-slate-200 pb-4">
             <h1 class="text-2xl font-bold text-[#1F3A5F] tracking-tight">Ubah Laporan: {{ $laporan->nomor_tiket }}</h1>
             <p class="text-sm text-slate-500 mt-1">Perbarui data laporan kerusakan Anda selama status masih menunggu verifikasi.</p>
         </div>
+
+        @if($isReadOnly)
+            <!-- Banner Laporan Terkunci (Read-Only) -->
+            <div dusk="readonly-alert" class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start gap-3">
+                <svg class="h-5 w-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <div class="text-xs">
+                    <strong class="font-semibold block text-sm">Formulir Terkunci (Read-Only)</strong>
+                    Laporan ini saat ini berstatus <strong>{{ ucwords(str_replace('_', ' ', $laporan->status)) }}</strong>. Formulir laporan telah dikunci dan data tidak dapat diubah maupun dibatalkan karena telah diproses oleh Admin DSDABM.
+                </div>
+            </div>
+        @endif
 
         <!-- Form Card -->
         <x-card class="p-6 sm:p-8">
@@ -22,9 +37,10 @@
                             type="text"
                             name="judul"
                             id="judul"
+                            dusk="input-judul"
                             value="{{ old('judul', $laporan->judul) }}"
-                            required
-                            class="w-full px-4 py-2.5 border rounded-xl text-sm transition-all focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent @error('judul') border-rose-300 bg-rose-50/30 @else border-slate-300 @enderror"
+                            {{ $isReadOnly ? 'readonly disabled' : 'required' }}
+                            class="w-full px-4 py-2.5 border rounded-xl text-sm transition-all focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent @error('judul') border-rose-300 bg-rose-50/30 @else border-slate-300 @enderror {{ $isReadOnly ? 'bg-slate-100 cursor-not-allowed text-slate-500' : '' }}"
                         >
                         @error('judul')
                             <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
@@ -37,8 +53,9 @@
                             <select
                                 name="kategori_id"
                                 id="kategori_id"
-                                required
-                                class="w-full px-4 py-2.5 border rounded-xl text-sm transition-all focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent @error('kategori_id') border-rose-300 bg-rose-50/30 @else border-slate-300 @enderror"
+                                dusk="select-kategori"
+                                {{ $isReadOnly ? 'disabled' : 'required' }}
+                                class="w-full px-4 py-2.5 border rounded-xl text-sm transition-all focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent @error('kategori_id') border-rose-300 bg-rose-50/30 @else border-slate-300 @enderror {{ $isReadOnly ? 'bg-slate-100 cursor-not-allowed text-slate-500' : '' }}"
                             >
                                 @foreach($kategoriList as $kategori)
                                     <option value="{{ $kategori->id }}" {{ old('kategori_id', $laporan->kategori_id) == $kategori->id ? 'selected' : '' }}>
@@ -57,10 +74,12 @@
                                 type="file"
                                 name="foto_bukti_sebelum"
                                 id="foto_bukti_sebelum"
+                                dusk="foto-bukti-input"
                                 accept="image/png,image/jpeg,image/jpg"
-                                class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-[#1F3A5F] hover:file:bg-slate-200 cursor-pointer"
+                                {{ $isReadOnly ? 'disabled' : '' }}
+                                class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-[#1F3A5F] hover:file:bg-slate-200 cursor-pointer {{ $isReadOnly ? 'cursor-not-allowed opacity-50' : '' }}"
                             >
-                            <p class="text-xs text-slate-400 mt-1">Biarkan kosong jika tidak ingin mengubah foto sebelumnya.</p>
+                            <p class="text-xs text-slate-400 mt-1">Biarkan kosong jika tidak ingin mengubah foto sebelumnya (maks 5 MB, format .jpg, .jpeg, .png).</p>
                             @error('foto_bukti_sebelum')
                                 <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
                             @enderror
@@ -72,9 +91,10 @@
                         <textarea
                             name="deskripsi_kondisi"
                             id="deskripsi_kondisi"
+                            dusk="input-deskripsi"
                             rows="3"
-                            required
-                            class="w-full px-4 py-2.5 border rounded-xl text-sm transition-all focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent @error('deskripsi_kondisi') border-rose-300 bg-rose-50/30 @else border-slate-300 @enderror"
+                            {{ $isReadOnly ? 'readonly disabled' : 'required' }}
+                            class="w-full px-4 py-2.5 border rounded-xl text-sm transition-all focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent @error('deskripsi_kondisi') border-rose-300 bg-rose-50/30 @else border-slate-300 @enderror {{ $isReadOnly ? 'bg-slate-100 cursor-not-allowed text-slate-500' : '' }}"
                         >{{ old('deskripsi_kondisi', $laporan->deskripsi_kondisi) }}</textarea>
                         @error('deskripsi_kondisi')
                             <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
@@ -91,7 +111,9 @@
                             <label for="kecamatan_select" class="block text-sm font-semibold text-slate-700 mb-1.5">Pilih Kecamatan <span class="text-rose-500">*</span></label>
                             <select
                                 id="kecamatan_select"
-                                class="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm transition-all focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent"
+                                dusk="kecamatan-select"
+                                {{ $isReadOnly ? 'disabled' : '' }}
+                                class="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm transition-all focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent {{ $isReadOnly ? 'bg-slate-100 cursor-not-allowed text-slate-500' : '' }}"
                             >
                                 @foreach($kecamatanList as $kec)
                                     <option value="{{ $kec->id }}" {{ $laporan->kelurahan->kecamatan_id == $kec->id ? 'selected' : '' }}>
@@ -106,8 +128,9 @@
                             <select
                                 name="kelurahan_id"
                                 id="kelurahan_id"
-                                required
-                                class="w-full px-4 py-2.5 border rounded-xl text-sm transition-all focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent @error('kelurahan_id') border-rose-300 bg-rose-50/30 @else border-slate-300 @enderror"
+                                dusk="kelurahan-select"
+                                {{ $isReadOnly ? 'disabled' : 'required' }}
+                                class="w-full px-4 py-2.5 border rounded-xl text-sm transition-all focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent @error('kelurahan_id') border-rose-300 bg-rose-50/30 @else border-slate-300 @enderror {{ $isReadOnly ? 'bg-slate-100 cursor-not-allowed text-slate-500' : '' }}"
                             >
                                 <option value="{{ $laporan->kelurahan_id }}" selected>{{ $laporan->kelurahan->nama_kelurahan }}</option>
                             </select>
@@ -131,7 +154,8 @@
                                 id="btnUseMyLocation"
                                 dusk="btn-use-my-location"
                                 onclick="getCurrentLocation()"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#0E7C86] font-semibold text-xs transition-colors border border-teal-200 shadow-2xs cursor-pointer self-start sm:self-auto"
+                                {{ $isReadOnly ? 'disabled' : '' }}
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#0E7C86] font-semibold text-xs transition-colors border border-teal-200 shadow-2xs cursor-pointer self-start sm:self-auto {{ $isReadOnly ? 'opacity-50 cursor-not-allowed' : '' }}"
                             >
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                 Gunakan lokasi saya
@@ -154,7 +178,8 @@
                                 id="btnKonfirmasiTitik"
                                 dusk="konfirmasi-titik-btn"
                                 onclick="konfirmasiTitik()"
-                                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#0E7C86] hover:bg-[#0b636b] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer self-start sm:self-auto"
+                                {{ $isReadOnly ? 'disabled' : '' }}
+                                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#0E7C86] hover:bg-[#0b636b] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer self-start sm:self-auto {{ $isReadOnly ? 'opacity-50 cursor-not-allowed' : '' }}"
                             >
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 Konfirmasi Titik Lokasi
@@ -179,7 +204,8 @@
                             id="patokan_lokasi"
                             dusk="patokan-lokasi"
                             value="{{ old('patokan_lokasi') }}"
-                            class="w-full px-4 py-2.5 border rounded-xl text-sm transition-all focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent @error('patokan_lokasi') border-rose-300 bg-rose-50/30 @else border-slate-300 @enderror"
+                            {{ $isReadOnly ? 'readonly disabled' : '' }}
+                            class="w-full px-4 py-2.5 border rounded-xl text-sm transition-all focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent @error('patokan_lokasi') border-rose-300 bg-rose-50/30 @else border-slate-300 @enderror {{ $isReadOnly ? 'bg-slate-100 cursor-not-allowed text-slate-500' : '' }}"
                             placeholder="Contoh: Depan Gapura RW 05, Seberang Toko Sumber Rezeki, Dekat Lampu Merah..."
                         >
                         @error('patokan_lokasi')
@@ -222,14 +248,20 @@
                     </div>
                 </div>
 
-                <!-- Tombol Submit -->
+                <!-- Tombol Submit / Aksi -->
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                     <a href="{{ route('warga.laporan.show', $laporan->id) }}" class="px-5 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors">
-                        Batal
+                        {{ $isReadOnly ? 'Kembali ke Detail' : 'Batal' }}
                     </a>
-                    <button type="submit" dusk="submit-btn" class="px-6 py-2.5 bg-[#0E7C86] hover:bg-[#0b636b] text-white font-bold text-sm rounded-xl transition-all shadow-md">
-                        Simpan Perubahan
-                    </button>
+                    @if($isReadOnly)
+                        <button type="button" disabled dusk="submit-btn-disabled" class="px-6 py-2.5 bg-slate-200 text-slate-400 font-bold text-sm rounded-xl cursor-not-allowed">
+                            Simpan Perubahan (Terkunci)
+                        </button>
+                    @else
+                        <button type="submit" dusk="submit-btn" class="px-6 py-2.5 bg-[#0E7C86] hover:bg-[#0b636b] text-white font-bold text-sm rounded-xl transition-all shadow-md">
+                            Simpan Perubahan
+                        </button>
+                    @endif
                 </div>
             </form>
         </x-card>
@@ -240,6 +272,7 @@
     <script>
         let map;
         let marker;
+        const isReadOnly = @js($isReadOnly);
         const currentLat = parseFloat(document.getElementById('latitude').value) || -6.917464;
         const currentLng = parseFloat(document.getElementById('longitude').value) || 107.619123;
 
@@ -255,21 +288,23 @@
             }).addTo(map);
 
             marker = L.marker([currentLat, currentLng], {
-                draggable: true,
-                autoPan: true
+                draggable: !isReadOnly,
+                autoPan: !isReadOnly
             }).addTo(map);
 
-            marker.bindPopup('<b>Titik Kerusakan</b><br>Geser pin merah untuk menyesuaikan titik koordinat presisi.').openPopup();
+            marker.bindPopup('<b>Titik Kerusakan</b><br>' + (isReadOnly ? 'Titik koordinat laporan terkunci.' : 'Geser pin merah untuk menyesuaikan titik koordinat presisi.')).openPopup();
 
-            marker.on('dragend', function(e) {
-                const pos = marker.getLatLng();
-                updateCoordinates(pos.lat, pos.lng);
-            });
+            if (!isReadOnly) {
+                marker.on('dragend', function(e) {
+                    const pos = marker.getLatLng();
+                    updateCoordinates(pos.lat, pos.lng);
+                });
 
-            map.on('click', function(e) {
-                marker.setLatLng(e.latlng);
-                updateCoordinates(e.latlng.lat, e.latlng.lng);
-            });
+                map.on('click', function(e) {
+                    marker.setLatLng(e.latlng);
+                    updateCoordinates(e.latlng.lat, e.latlng.lng);
+                });
+            }
 
             setTimeout(() => {
                 map.invalidateSize();
@@ -279,7 +314,7 @@
             const kecSelect = document.getElementById('kecamatan_select');
             const kelSelect = document.getElementById('kelurahan_id');
 
-            if (kecSelect && kelSelect) {
+            if (kecSelect && kelSelect && !isReadOnly) {
                 kecSelect.addEventListener('change', function() {
                     const kecId = this.value;
                     kelSelect.innerHTML = '<option value="">Memuat kelurahan...</option>';
@@ -305,6 +340,8 @@
         });
 
         function updateCoordinates(lat, lng) {
+            if (isReadOnly) return;
+
             const latFixed = lat.toFixed(8);
             const lngFixed = lng.toFixed(8);
 
@@ -335,6 +372,8 @@
         }
 
         function konfirmasiTitik() {
+            if (isReadOnly) return;
+
             const lat = document.getElementById('latitude').value;
             const lng = document.getElementById('longitude').value;
 
@@ -351,6 +390,8 @@
         }
 
         function getCurrentLocation() {
+            if (isReadOnly) return;
+
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(pos) {
                     const lat = pos.coords.latitude;
@@ -369,7 +410,6 @@
             } else {
                 alert('Browser Anda tidak mendukung geolokasi.');
             }
-        }
         }
     </script>
 </x-warga-layout>
