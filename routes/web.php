@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\DisposisiController;
 use App\Http\Controllers\Admin\KategoriController;
 use App\Http\Controllers\Admin\KecamatanController;
 use App\Http\Controllers\Admin\KelurahanController;
+use App\Http\Controllers\Admin\PetugasController;
 use App\Http\Controllers\Admin\RekapController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VerifikasiController;
@@ -68,6 +69,14 @@ Route::middleware('auth')->group(function () {
         Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
         Route::resource('users', UserController::class)->except(['show']);
         Route::resource('kategori', KategoriController::class)->except(['show']);
+        // PBI-17: Kelola Petugas Lapangan (IFD-18)
+        Route::get('/petugas', [PetugasController::class, 'index'])->name('petugas.index');
+        Route::get('/petugas/create', [PetugasController::class, 'create'])->name('petugas.create');
+        Route::post('/petugas', [PetugasController::class, 'store'])->name('petugas.store');
+        Route::get('/petugas/{id}', [PetugasController::class, 'show'])->name('petugas.show');
+        Route::get('/petugas/{id}/edit', [PetugasController::class, 'edit'])->name('petugas.edit');
+        Route::put('/petugas/{id}', [PetugasController::class, 'update'])->name('petugas.update');
+        Route::patch('/petugas/{id}/toggle-status', [PetugasController::class, 'toggleStatus'])->name('petugas.toggle-status');
         // Fase 5: Verifikasi & Penilaian Prioritas
         Route::get('/verifikasi', [VerifikasiController::class, 'index'])->name('verifikasi.index');
         Route::get('/verifikasi/{id}', [VerifikasiController::class, 'show'])->name('verifikasi.show');
