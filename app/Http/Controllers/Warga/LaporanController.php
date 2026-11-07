@@ -29,12 +29,23 @@ class LaporanController extends Controller
         return view('warga.laporan.index', compact('laporanList', 'status'));
     }
 
-    public function create(): View
+    public function pilihWilayah(Request $request): View
+    {
+        $kecamatanList = $this->wilayahService->getAllKecamatan();
+        $selectedKecamatanId = $request->query('kecamatan_id');
+        $selectedKelurahanId = $request->query('kelurahan_id');
+
+        return view('warga.laporan.pilih-wilayah', compact('kecamatanList', 'selectedKecamatanId', 'selectedKelurahanId'));
+    }
+
+    public function create(Request $request): View
     {
         $kecamatanList = $this->wilayahService->getAllKecamatan();
         $kategoriList = $this->kategoriService->getAllKategori();
+        $selectedKecamatanId = $request->query('kecamatan_id');
+        $selectedKelurahanId = $request->query('kelurahan_id');
 
-        return view('warga.laporan.create', compact('kecamatanList', 'kategoriList'));
+        return view('warga.laporan.create', compact('kecamatanList', 'kategoriList', 'selectedKecamatanId', 'selectedKelurahanId'));
     }
 
     public function store(LaporanKerusakanRequest $request): RedirectResponse

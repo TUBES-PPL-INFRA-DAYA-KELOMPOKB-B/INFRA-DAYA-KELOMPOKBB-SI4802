@@ -106,7 +106,9 @@
                             >
                                 <option value="">Pilih Kecamatan Kota Bandung</option>
                                 @foreach($kecamatanList as $kec)
-                                    <option value="{{ $kec->id }}">{{ $kec->nama_kecamatan }}</option>
+                                    <option value="{{ $kec->id }}" {{ (old('kecamatan_id', $selectedKecamatanId ?? '') == $kec->id) ? 'selected' : '' }}>
+                                        {{ $kec->nama_kecamatan }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -219,9 +221,9 @@
             // Chained Dropdown Wilayah
             const kecSelect = document.getElementById('kecamatan_select');
             const kelSelect = document.getElementById('kelurahan_id');
+            const initialKelurahanId = '{{ old('kelurahan_id', $selectedKelurahanId ?? '') }}';
 
-            kecSelect.addEventListener('change', function() {
-                const kecId = this.value;
+            function loadKelurahan(kecId, preselectId = null) {
                 kelSelect.innerHTML = '<option value="">Memuat kelurahan...</option>';
 
                 if (!kecId) {
@@ -238,6 +240,9 @@
                                 const opt = document.createElement('option');
                                 opt.value = kel.id;
                                 opt.textContent = kel.nama_kelurahan;
+                                if (preselectId && kel.id == preselectId) {
+                                    opt.selected = true;
+                                }
                                 kelSelect.appendChild(opt);
                             });
                         }
@@ -245,7 +250,15 @@
                     .catch(() => {
                         kelSelect.innerHTML = '<option value="">Gagal memuat kelurahan</option>';
                     });
+            }
+
+            kecSelect.addEventListener('change', function() {
+                loadKelurahan(this.value);
             });
+
+            if (kecSelect.value) {
+                loadKelurahan(kecSelect.value, initialKelurahanId);
+            }
         });
 
         function updateCoordinates(lat, lng) {

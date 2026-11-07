@@ -48,7 +48,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Route Warga
-    Route::middleware('role:warga')->prefix('warga')->name('warga.')->group(function () {
+    Route::middleware('role:warga,admin')->prefix('warga')->name('warga.')->group(function () {
+        Route::get('/pilih-wilayah', [LaporanController::class, 'pilihWilayah'])->name('laporan.pilih-wilayah');
         Route::get('/laporan-saya', [LaporanController::class, 'index'])->name('laporan.saya');
         Route::get('/lapor', [LaporanController::class, 'create'])->name('laporan.create');
         Route::post('/lapor', [LaporanController::class, 'store'])
