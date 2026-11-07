@@ -41,18 +41,23 @@ class StoreDisposisiRequest extends FormRequest
                     }
                 },
             ],
-            'tanggal_disposisi' => ['nullable', 'date'],
             'tenggat_waktu' => [
+                'sometimes',
                 'required',
                 'date',
                 function ($attribute, $value, $fail) {
-                    $tanggalDisposisi = $this->input('tanggal_disposisi', now()->toDateString());
-                    if ($value && $tanggalDisposisi && $value < $tanggalDisposisi) {
+                    $tanggalDisposisi = now()->toDateString();
+                    if ($value && $value < $tanggalDisposisi) {
                         $fail('Tenggat waktu pelaksanaan tidak boleh lebih awal dari tanggal disposisi.');
                     }
                 },
             ],
-            'catatan_instruksi' => ['required', 'string', 'min:10', 'max:1500'],
+            'catatan_instruksi' => [
+                'required',
+                'string',
+                'regex:/\S+/',
+                'max:1500',
+            ],
         ];
     }
 
@@ -66,7 +71,7 @@ class StoreDisposisiRequest extends FormRequest
             'tenggat_waktu.required' => 'Tenggat waktu pelaksanaan wajib ditentukan.',
             'tenggat_waktu.date' => 'Format tanggal tenggat waktu tidak valid.',
             'catatan_instruksi.required' => 'Instruksi dan catatan teknis pelaksanaan wajib diisi.',
-            'catatan_instruksi.min' => 'Instruksi teknis minimal 10 karakter agar jelas dipahami petugas.',
+            'catatan_instruksi.regex' => 'Instruksi wajib mengandung sekurangnya satu karakter nonspasi.',
             'catatan_instruksi.max' => 'Instruksi teknis maksimal 1500 karakter.',
         ];
     }

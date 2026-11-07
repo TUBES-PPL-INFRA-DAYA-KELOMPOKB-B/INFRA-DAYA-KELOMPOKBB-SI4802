@@ -29,7 +29,7 @@ class DisposisiPenugasan extends Model
     protected function casts(): array
     {
         return [
-            'tanggal_disposisi' => 'date',
+            'tanggal_disposisi' => 'datetime',
             'tenggat_waktu' => 'date',
             'tanggal_selesai' => 'date',
         ];
@@ -77,11 +77,19 @@ class DisposisiPenugasan extends Model
 
     public function isOverdue(): bool
     {
+        if (! $this->tenggat_waktu) {
+            return false;
+        }
+
         return $this->status_penugasan !== 'selesai' && $this->tenggat_waktu->isPast() && ! $this->tenggat_waktu->isToday();
     }
 
     public function sisaHari(): int
     {
+        if (! $this->tenggat_waktu) {
+            return 0;
+        }
+
         return (int) now()->startOfDay()->diffInDays($this->tenggat_waktu->startOfDay(), false);
     }
 }

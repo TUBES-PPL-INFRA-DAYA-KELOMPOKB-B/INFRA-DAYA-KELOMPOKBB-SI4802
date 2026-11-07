@@ -24,6 +24,7 @@ class User extends Authenticatable
         'avatar',
         'role',
         'is_active',
+        'deactivated_at',
         'password',
     ];
 
@@ -47,6 +48,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'is_active' => 'boolean',
+            'deactivated_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -74,6 +76,46 @@ class User extends Authenticatable
     public function penugasanPetugas(): HasMany
     {
         return $this->hasMany(DisposisiPenugasan::class, 'petugas_id');
+    }
+
+    public function laporanKerusakan(): HasMany
+    {
+        return $this->hasMany(LaporanKerusakan::class, 'warga_id');
+    }
+
+    public function disposisiDibuat(): HasMany
+    {
+        return $this->hasMany(DisposisiPenugasan::class, 'admin_id');
+    }
+
+    public function riwayatStatus(): HasMany
+    {
+        return $this->hasMany(RiwayatStatus::class, 'user_id');
+    }
+
+    public function userLogs(): HasMany
+    {
+        return $this->hasMany(UserLog::class, 'target_user_id')->latest('created_at');
+    }
+
+    public function hasRelatedData(): bool
+    {
+        return $this->laporanKerusakan()->exists()
+            || $this->disposisiDibuat()->exists()
+            || $this->penugasanPetugas()->exists()
+            || $this->riwayatStatus()->exists();
+    }
+
+    /**
+     * Memeriksa apakah pengguna adalah satu-satunya Admin aktif di sistem.
+     */
+    public function isLastActiveAdmin(): bool
+    {
+        if ($this->role !== 'admin' || ! $this->is_active) {
+            return false;
+        }
+
+        return static::where('role', 'admin')->where('is_active', true)->count() <= 1;
     }
 
     public function scopePetugasAktif($query)

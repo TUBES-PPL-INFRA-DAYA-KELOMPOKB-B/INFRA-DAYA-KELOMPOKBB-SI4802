@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureUserActive;
 use App\Http\Middleware\EnsureUserRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -13,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
+        $middleware->appendToGroup('web', EnsureUserActive::class);
         $middleware->alias([
             'role' => EnsureUserRole::class,
         ]);
