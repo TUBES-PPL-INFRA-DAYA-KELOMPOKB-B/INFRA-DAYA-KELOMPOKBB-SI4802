@@ -91,7 +91,7 @@ class TugasController extends Controller
     }
 
     /**
-     * Menyelesaikan tugas dengan mengunggah bukti perbaikan dan catatan teknis.
+     * Menyelesaikan tugas dengan mengunggah bukti perbaikan dan catatan teknis (PBI-21 / FR-21.1 - FR-21.7).
      */
     public function selesai(SelesaikanTugasRequest $request, int $id): RedirectResponse
     {
@@ -105,5 +105,13 @@ class TugasController extends Controller
         return redirect()
             ->route('petugas.tugas.show', $disposisi->id)
             ->with('success', 'Tugas perbaikan lapangan berhasil diselesaikan. Status laporan kini menjadi Selesai.');
+    }
+
+    /**
+     * Aksi completeTask sesuai penamaan spesifikasi FR-21.1 pada PRD.
+     */
+    public function completeTask(SelesaikanTugasRequest $request, int $id): RedirectResponse
+    {
+        return $this->selesai($request, $id);
     }
 }

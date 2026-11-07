@@ -280,27 +280,38 @@ class PetugasService
     }
 
     /**
-     * Menyelesaikan tugas pengerjaan dengan unggahan foto bukti sesudah dan catatan teknis.
+     * Menyelesaikan tugas pengerjaan dengan unggahan foto bukti sesudah dan catatan teknis (PBI-21 / FR-21.1 - FR-21.7).
+     * Dapat dipanggil melalui aksi completeTask().
      */
     public function selesaikanTugas(
         int $disposisiId,
         int $petugasId,
-        UploadedFile $fotoSesudah,
+        ?UploadedFile $fotoSesudah,
         string $catatanPerbaikan
     ): DisposisiPenugasan {
         $disposisi = $this->getTugasDetail($disposisiId, $petugasId);
 
-        if (! $disposisi->canBeCompleted()) {
-            throw new HttpException(422, 'Tugas ini sudah selesai atau tidak dapat diselesaikan.');
+        // FR-21.7: Tugas yang sudah selesai tidak dapat ditutup ulang (penutupan ganda ditolak)
+        if (! $disposisi->canBeCompleted() || $disposisi->isSelesai()) {
+            throw new HttpException(422, 'Tugas ini sudah selesai atau tidak dapat diselesaikan kembali.');
         }
 
-        // Simpan foto bukti sesudah dengan ekstensi aman server MIME (SEC-02)
-        $path = FileUploadService::storePublicFile($fotoSesudah, 'laporan/sesudah');
+        // FR-21.2: Minimal satu foto hasil perbaikan wajib ada
+        $existingPhoto = $disposisi->hasilPerbaikan?->foto_bukti_sesudah ?? $disposisi->foto_bukti_sesudah;
+        if (! $fotoSesudah && ! $existingPhoto) {
+            throw new HttpException(422, 'Wajib menyertakan minimal satu foto bukti fisik hasil perbaikan.');
+        }
+
+        // Simpan foto baru jika diunggah, atau gunakan foto yang sudah tersimpan
+        $path = $existingPhoto;
+        if ($fotoSesudah) {
+            $path = FileUploadService::storePublicFile($fotoSesudah, 'laporan/sesudah');
+        }
 
         return DB::transaction(function () use ($disposisi, $petugasId, $path, $catatanPerbaikan) {
             $now = now();
 
-            // Sesuai Bagian 6 PRD: Simpan / perbarui ke tabel hasil_perbaikan
+            // FR-21.4 & Seksi 6 PRD: Simpan / perbarui ke tabel hasil_perbaikan
             HasilPerbaikan::updateOrCreate(
                 ['disposisi_id' => $disposisi->id],
                 [
@@ -311,7 +322,7 @@ class PetugasService
                 ]
             );
 
-            // Perbarui data disposisi
+            // Perbarui data disposisi (FR-21.4)
             $disposisi->update([
                 'status_penugasan' => 'selesai',
                 'foto_bukti_sesudah' => $path,
@@ -319,7 +330,7 @@ class PetugasService
                 'tanggal_selesai' => $now->toDateString(),
             ]);
 
-            // Perbarui data laporan
+            // Perbarui data laporan menjadi 'selesai' (FR-21.4)
             $disposisi->laporan->update([
                 'status' => 'selesai',
                 'foto_bukti_sesudah' => $path,
@@ -330,7 +341,7 @@ class PetugasService
             $petugas = User::find($petugasId);
             $namaPetugas = $petugas ? $petugas->name : 'Petugas Lapangan';
 
-            // Catat riwayat status audit
+            // FR-21.5: Catat riwayat status audit dengan waktu dan pelaku
             RiwayatStatus::create([
                 'laporan_id' => $disposisi->laporan_id,
                 'user_id' => $petugasId,
@@ -340,6 +351,18 @@ class PetugasService
 
             return $disposisi->fresh(['hasilPerbaikan']);
         });
+    }
+
+    /**
+     * Alias aksi completeTask sesuai FR-21.1 pada PRD.
+     */
+    public function completeTask(
+        int $disposisiId,
+        int $petugasId,
+        ?UploadedFile $fotoSesudah,
+        string $catatanPerbaikan
+    ): DisposisiPenugasan {
+        return $this->selesaikanTugas($disposisiId, $petugasId, $fotoSesudah, $catatanPerbaikan);
     }
 
     /**

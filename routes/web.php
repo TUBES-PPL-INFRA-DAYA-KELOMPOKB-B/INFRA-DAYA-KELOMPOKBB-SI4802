@@ -86,6 +86,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/tugas/{id}/mulai', [TugasController::class, 'mulai'])->name('tugas.mulai');
         Route::post('/tugas/{id}/progres', [TugasController::class, 'updateProgres'])->name('tugas.progres');
         Route::post('/tugas/{id}/selesai', [TugasController::class, 'selesai'])->name('tugas.selesai');
+        Route::post('/tugas/{id}/complete', [TugasController::class, 'completeTask'])->name('tugas.complete');
     });
 
     // Route Pimpinan Eksekutif

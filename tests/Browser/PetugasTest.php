@@ -172,7 +172,7 @@ class PetugasTest extends DuskTestCase
     }
 
     /**
-     * PBI-20: Petugas dapat memperbarui catatan progres dan mengunggah/mengganti foto hasil (FR-20.1 - FR-20.10).
+     * PBI-20 & PBI-21: Petugas dapat memperbarui catatan progres, mengunggah foto progres, dan menutup tugas (FR-20.1 - FR-20.10, FR-21.1 - FR-21.8).
      */
     public function test_petugas_can_update_progress_and_upload_interim_photo(): void
     {
@@ -190,7 +190,16 @@ class PetugasTest extends DuskTestCase
                 ->waitForText('Progres penanganan tugas berhasil diperbarui.')
                 ->assertSee('Progres penanganan tugas berhasil diperbarui.')
                 ->assertSee('Foto Dokumentasi Tersimpan')
-                ->assertSee('Sedang dilakukan pengerukan sedimentasi lumpur');
+                ->assertSee('Sedang dilakukan pengerukan sedimentasi lumpur')
+                // PBI-21: Petugas dapat menutup tugas menggunakan foto yang sudah tersimpan (FR-21.2)
+                ->type('@input-catatan-perbaikan', 'Pekerjaan drainase tuntas 100%, saluran air telah mengalir normal kembali.')
+                ->press('@btn-submit-selesai')
+                ->waitForText('Perbaikan Tuntas')
+                ->assertSee('Perbaikan Tuntas')
+                ->assertSee('Tugas perbaikan lapangan berhasil diselesaikan')
+                // Verifikasi tugas selesai bersifat hanya-baca (FR-21.6)
+                ->assertMissing('@btn-submit-selesai')
+                ->assertMissing('@btn-submit-progres');
         });
     }
 

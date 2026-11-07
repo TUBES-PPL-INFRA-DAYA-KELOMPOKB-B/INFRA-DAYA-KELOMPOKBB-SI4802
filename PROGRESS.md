@@ -16,7 +16,7 @@ Terakhir diperbarui: 2026-10-12 (Fase 1)
 | **4** | **Pengajuan Laporan oleh Warga** | **DONE** | Form Leaflet.js Geotagging, Tiket Unik harian, Riwayat status log, IDOR Policy, 5/5 Dusk test PASS |
 | **5** | **Verifikasi & Penilaian Prioritas (Sprint 1)** | **DONE** | PBI 13 (Antrean & Filter Tanggal), PBI 14 (Aksi Terima/Tolak), PBI 15 (Prioritas) |
 | 6 | Disposisi Penugasan & Dokumen PDF | TODO | Surat Tugas Digital & PDF DomPDF |
-| **7** | **Pelaksanaan Lapangan oleh Petugas (PBI-19 & PBI-20)** | **DONE ✅** | PBI-19 (Daftar Tugas & Navigasi Peta Leaflet/OSM) & PBI-20 (Pembaruan Progres & Foto Hasil Tabel `hasil_perbaikan`), 32/32 PHPUnit Feature PASS & 6/6 Dusk E2E PASS |
+| **7** | **Pelaksanaan Lapangan oleh Petugas (PBI-19, PBI-20, PBI-21)** | **DONE ✅** | PBI-19 (Daftar & Navigasi Peta), PBI-20 (Update Progres & Foto Hasil), PBI-21 (Aksi Tutup Tugas Selesai & Riwayat), 41/41 PHPUnit Feature PASS & 6/6 Dusk E2E PASS |
 | 8 | Tracking Timeline & Peta Publik | TODO | Pelacakan Nomor Tiket & Leaflet Sebaran Terbuka |
 | 9 | Umpan Balik & Rating Warga | TODO | Bintang 1-5 & Ulasan Pasca Perbaikan |
 | 10 | Dashboard Eksekutif & Monitoring SLA | TODO | Metrik SLA, Tren Laporan Chart.js, Heatmap |

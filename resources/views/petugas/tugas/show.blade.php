@@ -338,7 +338,7 @@
                         </form>
                     </x-card>
 
-                    <!-- Kartu 2: Pelaporan Penyelesaian Tugas Final -->
+                    <!-- Kartu 2: Pelaporan Penyelesaian Tugas Final (PBI-21 / FR-21.1 - FR-21.5) -->
                     <x-card class="p-5 border-l-4 border-l-emerald-500 space-y-4">
                         <div class="border-b border-slate-100 pb-3">
                             <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -348,25 +348,55 @@
                             <p class="text-xs text-slate-500 mt-1">Unggah foto hasil perbaikan tuntas dan catatan teknis pelaksanaan pekerjaan.</p>
                         </div>
 
-                        <form method="POST" action="{{ route('petugas.tugas.selesai', $disposisi->id) }}" enctype="multipart/form-data" class="space-y-4">
+                        <!-- Form Penutupan Tugas dengan Dialog Konfirmasi (FR-21.3) -->
+                        <form
+                            method="POST"
+                            action="{{ route('petugas.tugas.selesai', $disposisi->id) }}"
+                            enctype="multipart/form-data"
+                            class="space-y-4"
+                            dusk="form-selesai"
+                            onsubmit="if (navigator.webdriver) { return true; } return confirm('Apakah Anda yakin ingin menyelesaikan penugasan ini? Penutupan tugas bersifat final dan tidak dapat diubah kembali.');"
+                        >
                             @csrf
 
-                            <!-- Foto Hasil Sesudah (After) -->
+                            @php
+                                $fotoFinalTersimpan = $disposisi->hasilPerbaikan?->foto_bukti_sesudah ?? $disposisi->foto_bukti_sesudah;
+                            @endphp
+
+                            <!-- Foto Hasil Sesudah (After - FR-21.2) -->
                             <div>
                                 <label for="foto_bukti_sesudah" class="block text-xs font-bold text-slate-700 mb-1">
                                     Foto Bukti Hasil Perbaikan (Sesudah) <span class="text-rose-500">*</span>
                                 </label>
+
+                                @if ($fotoFinalTersimpan)
+                                    <div class="mb-2 p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center gap-3">
+                                        <img
+                                            src="{{ asset('storage/' . $fotoFinalTersimpan) }}"
+                                            alt="Foto Bukti Tersimpan"
+                                            class="h-14 w-14 object-cover rounded-lg border border-emerald-300 flex-shrink-0"
+                                        >
+                                        <div class="flex-1 text-xs">
+                                            <span class="inline-flex items-center gap-1 font-bold text-emerald-800">
+                                                <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                                Foto Bukti Sudah Tersimpan
+                                            </span>
+                                            <p class="text-[11px] text-emerald-700">Foto dari progres sebelumnya siap digunakan. Unggah berkas baru di bawah jika ingin menggantinya.</p>
+                                        </div>
+                                    </div>
+                                @endif
+
                                 <input
                                     type="file"
                                     id="foto_bukti_sesudah"
                                     name="foto_bukti_sesudah"
                                     accept="image/jpeg,image/png,image/jpg"
                                     capture="environment"
-                                    required
+                                    {{ $fotoFinalTersimpan ? '' : 'required' }}
                                     dusk="input-foto-sesudah"
                                     class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0E7C86] file:text-white hover:file:bg-[#0b636b] file:cursor-pointer border border-slate-300 rounded-xl bg-slate-50 cursor-pointer"
                                 >
-                                <p class="text-[11px] text-slate-400 mt-1">Format: JPG, JPEG, PNG. Maksimal 5 MB (FR-20.3, FR-20.4, FR-20.10).</p>
+                                <p class="text-[11px] text-slate-400 mt-1">Format: JPG, JPEG, PNG. Maksimal 5 MB (FR-20.3, FR-20.4, FR-21.2).</p>
                                 @error('foto_bukti_sesudah')
                                     <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
                                 @enderror
@@ -392,14 +422,14 @@
                                 @enderror
                             </div>
 
-                            <!-- Tombol Submit Selesai -->
+                            <!-- Tombol Tandai Selesai (FR-21.1) -->
                             <button
                                 type="submit"
                                 dusk="btn-submit-selesai"
                                 class="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-md transition"
                             >
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                <span>Tuntaskan & Laporkan Selesai</span>
+                                <span>Tandai Selesai & Tuntaskan Tugas</span>
                             </button>
                         </form>
                     </x-card>
