@@ -13,6 +13,8 @@
                         <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">Sedang Diproses</span>
                     @elseif($laporan->status === 'selesai')
                         <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">Tuntas Selesai</span>
+                    @elseif($laporan->status === 'dibatalkan')
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700">Dibatalkan</span>
                     @else
                         <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700">Ditolak</span>
                     @endif
@@ -27,11 +29,18 @@
                     Kembali
                 </a>
                 @if($laporan->canBeModifiedByWarga())
-                    <a href="{{ route('warga.laporan.edit', $laporan->id) }}" class="px-4 py-2 bg-[#0E7C86] hover:bg-[#0b636b] text-white rounded-xl text-sm font-medium transition-colors">
+                    <a href="{{ route('warga.laporan.edit', $laporan->id) }}" dusk="btn-edit-laporan" class="px-4 py-2 bg-[#0E7C86] hover:bg-[#0b636b] text-white rounded-xl text-sm font-medium transition-colors">
                         Ubah Laporan
                     </a>
-                    <button type="button" onclick="confirmCancel()" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-sm font-medium transition-colors border border-rose-200">
+                    <button type="button" dusk="btn-open-cancel-modal" onclick="confirmCancel()" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-sm font-medium transition-colors border border-rose-200 cursor-pointer">
                         Batalkan Laporan
+                    </button>
+                @else
+                    <button type="button" disabled dusk="btn-edit-disabled" title="Laporan sudah diproses/terkunci" class="px-4 py-2 bg-slate-100 text-slate-400 rounded-xl text-sm font-medium cursor-not-allowed border border-slate-200">
+                        Ubah (Terkunci)
+                    </button>
+                    <button type="button" disabled dusk="btn-cancel-disabled" title="Laporan sudah diproses/terkunci" class="px-4 py-2 bg-slate-100 text-slate-400 rounded-xl text-sm font-medium cursor-not-allowed border border-slate-200">
+                        Batal (Terkunci)
                     </button>
                 @endif
             </div>
@@ -69,6 +78,13 @@
                         <div class="p-4 bg-rose-50 border border-rose-200 rounded-xl space-y-1">
                             <h4 class="text-xs font-bold text-rose-800 uppercase tracking-wider">Alasan Penolakan</h4>
                             <p class="text-sm text-rose-700">{{ $laporan->alasan_penolakan }}</p>
+                        </div>
+                    @endif
+
+                    @if($laporan->alasan_pembatalan)
+                        <div dusk="alasan-pembatalan-card" class="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-1">
+                            <h4 class="text-xs font-bold text-zinc-700 uppercase tracking-wider">Alasan Pembatalan</h4>
+                            <p class="text-sm text-zinc-600">{{ $laporan->alasan_pembatalan }}</p>
                         </div>
                     @endif
                 </x-card>
@@ -345,24 +361,44 @@
     </div>
 
     @if($laporan->canBeModifiedByWarga())
-        <!-- Modal Konfirmasi Batal -->
-        <div id="cancelModal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <!-- Modal Konfirmasi Batal (PBI-9) -->
+        <div id="cancelModal" dusk="cancel-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
                 <div class="h-12 w-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                 </div>
                 <div>
-                    <h3 class="text-lg font-bold text-slate-900">Batalkan Laporan Ini?</h3>
-                    <p class="text-sm text-slate-500 mt-1">Laporan kerusakan <strong>{{ $laporan->nomor_tiket }}</strong> akan dihapus permanen dari sistem.</p>
+                    <h3 class="text-lg font-bold text-slate-900">Batalkan Pengajuan Laporan?</h3>
+                    <p class="text-sm text-slate-500 mt-1">Laporan kerusakan <strong>{{ $laporan->nomor_tiket }}</strong> akan dibatalkan. Status tiket akan diperbarui menjadi 'Dibatalkan' dan riwayat laporan tetap tersimpan.</p>
                 </div>
-                <form method="POST" action="{{ route('warga.laporan.destroy', $laporan->id) }}">
+                <form method="POST" action="{{ route('warga.laporan.destroy', $laporan->id) }}" class="space-y-4">
                     @csrf
                     @method('DELETE')
+
+                    <div>
+                        <label for="alasan_pembatalan" class="block text-xs font-bold text-slate-700 mb-1">
+                            Alasan Pembatalan <span class="text-rose-500">*</span>
+                        </label>
+                        <textarea
+                            name="alasan_pembatalan"
+                            id="alasan_pembatalan"
+                            dusk="alasan-pembatalan"
+                            rows="3"
+                            required
+                            minlength="5"
+                            placeholder="Tuliskan alasan pembatalan laporan kerusakan ini (minimal 5 karakter)..."
+                            class="w-full text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 p-3"
+                        >{{ old('alasan_pembatalan') }}</textarea>
+                        @error('alasan_pembatalan')
+                            <p class="text-xs text-rose-600 mt-1 font-semibold">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <div class="flex justify-end gap-3 pt-2">
-                        <button type="button" onclick="closeCancelModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors">
+                        <button type="button" dusk="btn-close-cancel-modal" onclick="closeCancelModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-medium transition-colors">
                             Kembali
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium transition-colors">
+                        <button type="submit" dusk="btn-confirm-cancel" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-medium transition-colors shadow-sm">
                             Ya, Batalkan Laporan
                         </button>
                     </div>

@@ -41,6 +41,7 @@ class UserUpdateRequest extends FormRequest
             'email.unique' => 'Email tersebut sudah digunakan pengguna lain.',
             'role.required' => 'Role pengguna wajib dipilih.',
             'role.in' => 'Role yang dipilih tidak valid.',
+            'password.min' => 'Password minimal 8 karakter.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
             'avatar.image' => 'File avatar harus berupa gambar.',
             'avatar.mimes' => 'Format avatar hanya mendukung JPG, JPEG, dan PNG.',

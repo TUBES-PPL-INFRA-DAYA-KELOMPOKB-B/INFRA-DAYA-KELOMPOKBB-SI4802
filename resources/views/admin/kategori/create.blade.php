@@ -33,18 +33,21 @@
                 </div>
 
                 <div>
-                    <label for="bobot_prioritas" class="block text-sm font-semibold text-slate-700 mb-1.5">Bobot Prioritas Default <span class="text-rose-500">*</span></label>
+                    <label for="tingkat_keparahan_default" class="block text-sm font-semibold text-slate-700 mb-1.5">Tingkat Keparahan Default <span class="text-rose-500">*</span></label>
+                    <p class="text-xs text-slate-500 mb-2">Pilihan tingkat keparahan otomatis menentukan bobot prioritas (1 - 4) laporan baru.</p>
                     <select
-                        name="bobot_prioritas"
-                        id="bobot_prioritas"
+                        name="tingkat_keparahan_default"
+                        id="tingkat_keparahan_default"
                         required
-                        class="w-full px-3.5 py-2.5 border rounded-xl text-sm transition-all focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent @error('bobot_prioritas') border-rose-300 bg-rose-50/30 @else border-slate-300 @enderror"
+                        class="w-full px-3.5 py-2.5 border rounded-xl text-sm transition-all focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent @error('tingkat_keparahan_default') border-rose-300 bg-rose-50/30 @else border-slate-300 @enderror"
                     >
-                        <option value="3" {{ old('bobot_prioritas', '3') == '3' ? 'selected' : '' }}>Tinggi (Bobot 3 - Berisiko keselamatan jiwa/banjir/lumpuh akses)</option>
-                        <option value="2" {{ old('bobot_prioritas') == '2' ? 'selected' : '' }}>Sedang (Bobot 2 - Mengganggu kelancaran aktivitas umum)</option>
-                        <option value="1" {{ old('bobot_prioritas') == '1' ? 'selected' : '' }}>Rendah (Bobot 1 - Kerusakan minor / estetika trotoar)</option>
+                        <option value="" disabled {{ old('tingkat_keparahan_default') ? '' : 'selected' }}>-- Pilih Tingkat Keparahan Default --</option>
+                        <option value="kritis" {{ old('tingkat_keparahan_default') == 'kritis' ? 'selected' : '' }}>🔴 Kritis (Bobot 4 - Ancaman keselamatan langsung / potensi bencana)</option>
+                        <option value="tinggi" {{ old('tingkat_keparahan_default') == 'tinggi' ? 'selected' : '' }}>🟠 Tinggi (Bobot 3 - Berpotensi membahayakan pengguna atau memicu kemacetan)</option>
+                        <option value="sedang" {{ old('tingkat_keparahan_default', 'sedang') == 'sedang' ? 'selected' : '' }}>🟡 Sedang (Bobot 2 - Mengganggu kelancaran / kenyamanan belum membahayakan)</option>
+                        <option value="rendah" {{ old('tingkat_keparahan_default') == 'rendah' ? 'selected' : '' }}>🟢 Rendah (Bobot 1 - Kerusakan kecil yang tidak mengganggu keselamatan)</option>
                     </select>
-                    @error('bobot_prioritas')
+                    @error('tingkat_keparahan_default')
                         <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
                     @enderror
                 </div>
