@@ -98,7 +98,8 @@
                             id="petugas_id"
                             dusk="select-petugas-id"
                             required
-                            class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent"
+                            @if($petugasList->isEmpty()) disabled @endif
+                            class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent @if($petugasList->isEmpty()) bg-slate-100 text-slate-400 @endif"
                         >
                             <option value="">-- Pilih Petugas yang Ditugaskan --</option>
                             @foreach($petugasList as $petugas)
@@ -107,34 +108,29 @@
                                 </option>
                             @endforeach
                         </select>
+                        @if($petugasList->isEmpty())
+                            <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs flex items-center gap-2 mt-2">
+                                <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                <span>Belum ada petugas lapangan yang aktif. Silakan tambahkan atau aktifkan akun petugas lapangan terlebih dahulu sebelum membuat lembar disposisi.</span>
+                            </div>
+                        @endif
                         @error('petugas_id')
                             <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <!-- Tanggal Disposisi & Tenggat Waktu -->
+                    <!-- Parameter Otomatis Server & Tenggat Waktu -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="tanggal_disposisi" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                                Tanggal Disposisi <span class="text-rose-500">*</span>
-                            </label>
-                            <input
-                                type="date"
-                                name="tanggal_disposisi"
-                                id="tanggal_disposisi"
-                                dusk="input-tanggal-disposisi"
-                                value="{{ old('tanggal_disposisi', now()->toDateString()) }}"
-                                required
-                                class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent"
-                            >
-                            @error('tanggal_disposisi')
-                                <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
-                            @enderror
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Ditetapkan Server</span>
+                            <p class="text-slate-700"><strong>Admin:</strong> {{ auth()->user()->name }}</p>
+                            <p class="text-slate-700"><strong>Waktu:</strong> {{ now()->translatedFormat('d F Y H:i') }} WIB</p>
+                            <p class="text-slate-700"><strong>Status Awal:</strong> <span class="font-bold text-sky-600">Ditugaskan</span></p>
                         </div>
 
                         <div>
                             <label for="tenggat_waktu" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                                Tenggat Waktu Pelaksanaan <span class="text-rose-500">*</span>
+                                Tenggat Waktu Pelaksanaan <span class="text-slate-400 font-normal">(Opsional)</span>
                             </label>
                             <input
                                 type="date"
@@ -143,7 +139,6 @@
                                 dusk="input-tenggat-waktu"
                                 value="{{ old('tenggat_waktu', now()->addDays(3)->toDateString()) }}"
                                 min="{{ now()->toDateString() }}"
-                                required
                                 class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent"
                             >
                             @error('tenggat_waktu')
@@ -163,10 +158,10 @@
                             dusk="input-catatan-instruksi"
                             rows="4"
                             required
-                            placeholder="Contoh: Lakukan survei kedalaman lubang jalan, pasang rambu peringatan keselamatan kerja, dan lakukan penambalan coldmix sebelum akhir pekan."
+                            placeholder="Tuliskan instruksi penanganan perbaikan (misal: Lakukan perataan aspal hotmix dan pasang garis pengaman kerja)."
                             class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent"
                         >{{ old('catatan_instruksi') }}</textarea>
-                        <p class="text-[11px] text-slate-400 mt-1">Minimal 10 karakter. Instruksi ini akan tercetak pada Surat Perintah Tugas resmi (SPT).</p>
+                        <p class="text-[11px] text-slate-400 mt-1">Instruksi wajib mengandung sekurangnya satu karakter nonspasi.</p>
                         @error('catatan_instruksi')
                             <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
                         @enderror
@@ -176,6 +171,7 @@
                     <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                         <a
                             href="{{ route('admin.disposisi.index') }}"
+                            dusk="btn-batal-disposisi"
                             class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition"
                         >
                             Batal
@@ -183,7 +179,8 @@
                         <button
                             type="submit"
                             dusk="btn-submit-disposisi"
-                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#0E7C86] hover:bg-[#0b636b] text-white font-bold text-sm shadow-md transition"
+                            @if($petugasList->isEmpty()) disabled @endif
+                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#0E7C86] hover:bg-[#0b636b] text-white font-bold text-sm shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                             <span>Terbitkan Surat Tugas (SPT)</span>

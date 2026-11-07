@@ -1,8 +1,12 @@
 <?php
 
+use App\Http\Controllers\Admin\DisposisiController;
 use App\Http\Controllers\Admin\KategoriController;
 use App\Http\Controllers\Admin\KecamatanController;
 use App\Http\Controllers\Admin\KelurahanController;
+use App\Http\Controllers\Admin\PetugasController;
+use App\Http\Controllers\Admin\RekapController;
+use App\Http\Controllers\Admin\SuratTugasController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VerifikasiController;
 use App\Http\Controllers\Api\WilayahController;
@@ -61,16 +65,43 @@ Route::middleware('auth')->group(function () {
         Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
         Route::resource('users', UserController::class)->except(['show']);
         Route::resource('kategori', KategoriController::class)->except(['show']);
+
+        // PBI-17: Kelola Petugas Lapangan (IFD-18)
+        Route::get('/petugas', [PetugasController::class, 'index'])->name('petugas.index');
+        Route::get('/petugas/create', [PetugasController::class, 'create'])->name('petugas.create');
+        Route::post('/petugas', [PetugasController::class, 'store'])->name('petugas.store');
+        Route::get('/petugas/{id}', [PetugasController::class, 'show'])->name('petugas.show');
+        Route::get('/petugas/{id}/edit', [PetugasController::class, 'edit'])->name('petugas.edit');
+        Route::put('/petugas/{id}', [PetugasController::class, 'update'])->name('petugas.update');
+        Route::patch('/petugas/{id}/toggle-status', [PetugasController::class, 'toggleStatus'])->name('petugas.toggle-status');
+
         // PBI-13: Daftar Aduan & Filter Laporan Masuk
         Route::get('/verifikasi', [VerifikasiController::class, 'index'])->name('verifikasi.index');
         // PBI-14: Verifikasi Detail Aduan, Terima & Tolak Laporan
         Route::get('/verifikasi/{id}', [VerifikasiController::class, 'show'])->name('verifikasi.show');
         Route::post('/verifikasi/{id}/setujui', [VerifikasiController::class, 'setujui'])->name('verifikasi.setujui');
         Route::post('/verifikasi/{id}/tolak', [VerifikasiController::class, 'tolak'])->name('verifikasi.tolak');
+
         // PBI-15: Penetapan & Pembaruan Skala Prioritas Penanganan
         Route::patch('/verifikasi/{id}/prioritas', [VerifikasiController::class, 'updatePrioritas'])->name('verifikasi.prioritas');
-        Route::get('/disposisi', fn () => redirect()->route('dashboard'))->name('disposisi.index');
-        Route::get('/rekap', fn () => redirect()->route('dashboard'))->name('rekap.index');
+
+        // Fase 6: Disposisi Penugasan & Surat Tugas PDF
+        Route::get('/disposisi', [DisposisiController::class, 'index'])->name('disposisi.index');
+        Route::get('/disposisi/create', [DisposisiController::class, 'create'])->name('disposisi.create');
+        Route::post('/disposisi', [DisposisiController::class, 'store'])->name('disposisi.store');
+        Route::get('/disposisi/{id}', [DisposisiController::class, 'show'])->name('disposisi.show');
+        Route::get('/disposisi/{id}/pdf', [DisposisiController::class, 'cetakPdf'])->name('disposisi.pdf');
+
+        // PBI-18: Pencetakan Surat Tugas (IFD-17)
+        Route::get('/surat-tugas', [SuratTugasController::class, 'index'])->name('surat-tugas.index');
+        Route::get('/surat-tugas/{id}', [SuratTugasController::class, 'show'])->name('surat-tugas.show');
+        Route::get('/surat-tugas/{id}/pdf', [SuratTugasController::class, 'pdf'])->name('surat-tugas.pdf');
+        Route::get('/surat-tugas/{id}/cetak', [SuratTugasController::class, 'cetak'])->name('surat-tugas.cetak');
+
+        // Fase 11: Rekapitulasi Data & Ekspor
+        Route::get('/rekap', [RekapController::class, 'index'])->name('rekap.index');
+        Route::get('/rekap/excel', [RekapController::class, 'exportExcel'])->name('rekap.excel');
+        Route::get('/rekap/pdf', [RekapController::class, 'exportPdf'])->name('rekap.pdf');
     });
 
     // Route Petugas Lapangan
