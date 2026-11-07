@@ -68,6 +68,106 @@
             </x-card>
         </div>
 
+        <!-- Bagian PBI-16: Laporan Siap Disposisi -->
+        <x-card class="p-5 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100">
+                <div>
+                    <h2 class="text-base font-bold text-[#1F3A5F] flex items-center gap-2">
+                        <svg class="h-5 w-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        <span>Daftar Laporan Siap Disposisi</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Laporan kerusakan terverifikasi (status diproses) yang belum memiliki lembar disposisi penugasan.</p>
+                </div>
+
+                <!-- Form Pencarian Laporan (AC16-05) -->
+                <form method="GET" action="{{ route('admin.disposisi.index') }}" class="flex items-center gap-2">
+                    <input
+                        type="text"
+                        name="search_laporan"
+                        dusk="input-search-laporan"
+                        value="{{ request('search_laporan') }}"
+                        placeholder="Cari nomor tiket atau judul..."
+                        class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent w-48 sm:w-64"
+                    >
+                    <button type="submit" dusk="btn-search-laporan" class="px-3 py-1.5 bg-[#0E7C86] text-white text-xs font-semibold rounded-lg hover:bg-[#0b636b] transition">
+                        Cari
+                    </button>
+                    @if(request('search_laporan'))
+                        <a href="{{ route('admin.disposisi.index') }}" dusk="btn-reset-laporan" class="px-3 py-1.5 bg-slate-100 text-slate-600 text-xs font-medium rounded-lg hover:bg-slate-200 transition">
+                            Reset
+                        </a>
+                    @endif
+                </form>
+            </div>
+
+            @if($totalSiapDisposisi === 0 && !request('search_laporan'))
+                <!-- AC16-06: Daftar kosong -->
+                <div class="py-8 text-center text-slate-500 text-sm">
+                    <svg class="h-10 w-10 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p class="font-medium text-slate-600">Belum ada laporan yang dapat didisposisikan</p>
+                </div>
+            @elseif($laporanSiapDisposisi->isEmpty() && request('search_laporan'))
+                <!-- AC16-06: Pencarian kosong -->
+                <div class="py-8 text-center text-slate-500 text-sm">
+                    <svg class="h-10 w-10 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <p class="font-medium text-slate-600">Laporan tidak ditemukan</p>
+                    <a href="{{ route('admin.disposisi.index') }}" class="text-xs text-[#0E7C86] underline mt-1 inline-block">Hapus pencarian untuk menampilkan semua</a>
+                </div>
+            @else
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-2.5 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">No. Tiket</th>
+                                <th class="px-4 py-2.5 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Judul Kerusakan</th>
+                                <th class="px-4 py-2.5 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kategori</th>
+                                <th class="px-4 py-2.5 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kelurahan / Kecamatan</th>
+                                <th class="px-4 py-2.5 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider">Prioritas</th>
+                                <th class="px-4 py-2.5 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                                <th class="px-4 py-2.5 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach($laporanSiapDisposisi as $lap)
+                                <tr class="hover:bg-slate-50/60 transition-colors" dusk="laporan-siap-row-{{ $lap->id }}">
+                                    <td class="px-4 py-3 font-mono text-xs font-bold text-[#1F3A5F]">
+                                        {{ $lap->nomor_tiket }}
+                                    </td>
+                                    <td class="px-4 py-3 font-semibold text-slate-800">
+                                        {{ $lap->judul }}
+                                    </td>
+                                    <td class="px-4 py-3 text-xs text-slate-600">
+                                        {{ $lap->kategori->nama_kategori ?? 'Umum' }}
+                                    </td>
+                                    <td class="px-4 py-3 text-xs text-slate-600">
+                                        Kel. {{ $lap->kelurahan->nama_kelurahan ?? '-' }}, Kec. {{ $lap->kelurahan->kecamatan->nama_kecamatan ?? '-' }}
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {{ $lap->prioritas === 'tinggi' ? 'bg-rose-100 text-rose-700' : ($lap->prioritas === 'sedang' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700') }}">
+                                            Prioritas {{ ucfirst($lap->prioritas) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <x-badge-status :status="$lap->status" />
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <a
+                                            href="{{ route('admin.disposisi.create', ['laporan_id' => $lap->id]) }}"
+                                            dusk="btn-buat-disposisi-{{ $lap->id }}"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[#0E7C86] hover:bg-[#0b636b] rounded-lg shadow-sm transition"
+                                        >
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                            <span>Buat Disposisi</span>
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </x-card>
+
         <!-- Filter Panel -->
         <x-card class="p-4">
             <form method="GET" action="{{ route('admin.disposisi.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -180,22 +280,24 @@
                                         </div>
                                     </td>
                                     <td class="px-4 py-3 text-center">
-                                        <p class="font-semibold text-xs text-slate-700">{{ $item->tenggat_waktu->format('d M Y') }}</p>
+                                        <p class="font-semibold text-xs text-slate-700">{{ $item->tenggat_waktu ? $item->tenggat_waktu->format('d M Y') : '-' }}</p>
                                         @if($item->isSelesai())
                                             <span class="inline-block text-[10px] text-emerald-600 font-medium">Telah Selesai</span>
-                                        @elseif($item->isOverdue())
+                                        @elseif($item->tenggat_waktu && $item->isOverdue())
                                             <span class="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
                                                 <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                                 Lewat {{ abs($item->sisaHari()) }} hr
                                             </span>
-                                        @elseif($item->sisaHari() === 0)
+                                        @elseif($item->tenggat_waktu && $item->sisaHari() === 0)
                                             <span class="inline-block text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
                                                 Hari ini!
                                             </span>
-                                        @else
+                                        @elseif($item->tenggat_waktu)
                                             <span class="inline-block text-[10px] text-slate-500">
                                                 Sisa {{ $item->sisaHari() }} hari
                                             </span>
+                                        @else
+                                            <span class="inline-block text-[10px] text-slate-400">Tidak ditentukan</span>
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-center">

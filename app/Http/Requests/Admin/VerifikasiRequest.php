@@ -13,11 +13,18 @@ class VerifikasiRequest extends FormRequest
 
     public function rules(): array
     {
-        // Setujui: butuh prioritas. Tolak: butuh alasan_penolakan.
+        // Setujui / Terima Aduan
         if ($this->routeIs('admin.verifikasi.setujui')) {
             return [
-                'prioritas' => ['required', 'in:rendah,sedang,tinggi'],
+                'prioritas' => ['nullable', 'in:rendah,sedang,tinggi'],
                 'catatan_verifikator' => ['nullable', 'string', 'max:1000'],
+            ];
+        }
+
+        // Prioritas mandiri
+        if ($this->routeIs('admin.verifikasi.prioritas')) {
+            return [
+                'prioritas' => ['required', 'in:rendah,sedang,tinggi'],
             ];
         }
 

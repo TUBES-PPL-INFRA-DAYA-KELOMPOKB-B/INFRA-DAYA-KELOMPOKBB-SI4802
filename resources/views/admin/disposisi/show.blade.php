@@ -19,13 +19,20 @@
             <!-- Action Toolbar -->
             <div class="flex items-center gap-2.5">
                 <a
-                    href="{{ route('admin.disposisi.pdf', $disposisi->id) }}"
-                    dusk="btn-unduh-pdf"
-                    target="_blank"
+                    href="{{ route('admin.surat-tugas.show', $disposisi->id) }}"
+                    dusk="btn-pratinjau-spt"
                     class="inline-flex items-center gap-2 px-4 py-2 bg-[#0E7C86] hover:bg-[#0b636b] text-white text-xs font-bold rounded-xl shadow-sm transition"
                 >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    <span>Pratinjau Surat Tugas</span>
+                </a>
+                <a
+                    href="{{ route('admin.surat-tugas.pdf', $disposisi->id) }}"
+                    dusk="btn-unduh-pdf"
+                    class="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl shadow-sm transition"
+                >
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    <span>Cetak SPT (PDF)</span>
+                    <span>Unduh PDF</span>
                 </a>
                 <a
                     href="{{ route('admin.verifikasi.show', $disposisi->laporan->id) }}"
@@ -92,23 +99,25 @@
                         <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Tenggat Waktu Selesai (SLA)</span>
                             <div class="flex items-center justify-between">
-                                <p class="font-bold text-slate-800 text-sm">{{ $disposisi->tenggat_waktu->translatedFormat('l, d F Y') }}</p>
+                                <p class="font-bold text-slate-800 text-sm">{{ $disposisi->tenggat_waktu ? $disposisi->tenggat_waktu->translatedFormat('l, d F Y') : '-' }}</p>
                                 @if($disposisi->isSelesai())
                                     <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                                         Rampung
                                     </span>
-                                @elseif($disposisi->isOverdue())
+                                @elseif($disposisi->tenggat_waktu && $disposisi->isOverdue())
                                     <span class="text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
                                         Terlambat {{ abs($disposisi->sisaHari()) }} hari
                                     </span>
-                                @elseif($disposisi->sisaHari() === 0)
+                                @elseif($disposisi->tenggat_waktu && $disposisi->sisaHari() === 0)
                                     <span class="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
                                         Hari ini!
                                     </span>
-                                @else
+                                @elseif($disposisi->tenggat_waktu)
                                     <span class="text-[11px] font-bold text-slate-600 bg-slate-200/70 px-2 py-0.5 rounded-full">
                                         Sisa {{ $disposisi->sisaHari() }} hari
                                     </span>
+                                @else
+                                    <span class="text-[11px] text-slate-400">Tidak ditentukan</span>
                                 @endif
                             </div>
                         </div>
