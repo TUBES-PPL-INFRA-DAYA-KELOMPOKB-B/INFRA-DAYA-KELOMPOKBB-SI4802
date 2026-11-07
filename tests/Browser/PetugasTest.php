@@ -127,6 +127,25 @@ class PetugasTest extends DuskTestCase
     }
 
     /**
+     * TC-19-05: Petugas dapat menerima tugas penugasan lapangan (FR-19.8).
+     */
+    public function test_petugas_can_accept_task(): void
+    {
+        $data = $this->createData();
+
+        $this->browse(function (Browser $browser) use ($data) {
+            $browser->loginAs($data['petugas'])
+                ->visit(route('petugas.tugas.show', $data['disposisi']->id))
+                ->assertSee('Ditugaskan')
+                ->assertPresent('@btn-terima-tugas')
+                ->press('@btn-terima-tugas')
+                ->waitForText('Diterima')
+                ->assertSee('Diterima')
+                ->assertSee('Tugas perbaikan berhasil diterima');
+        });
+    }
+
+    /**
      * Petugas dapat memulai pengerjaan fisik dan melaporkan penyelesaian dengan foto bukti sesudah.
      */
     public function test_petugas_can_start_and_complete_task_with_after_photo(): void
@@ -149,6 +168,38 @@ class PetugasTest extends DuskTestCase
                 ->waitForText('Perbaikan Tuntas')
                 ->assertSee('Perbaikan Tuntas')
                 ->assertSee('Tugas perbaikan lapangan berhasil diselesaikan');
+        });
+    }
+
+    /**
+     * PBI-20 & PBI-21: Petugas dapat memperbarui catatan progres, mengunggah foto progres, dan menutup tugas (FR-20.1 - FR-20.10, FR-21.1 - FR-21.8).
+     */
+    public function test_petugas_can_update_progress_and_upload_interim_photo(): void
+    {
+        $data = $this->createData();
+
+        $this->browse(function (Browser $browser) use ($data) {
+            $browser->loginAs($data['petugas'])
+                ->visit(route('petugas.tugas.show', $data['disposisi']->id))
+                ->press('@btn-mulai-pengerjaan')
+                ->waitForText('Pembaruan Progres & Dokumentasi')
+                ->assertSee('Pembaruan Progres & Dokumentasi')
+                ->type('@input-catatan-progres', 'Sedang dilakukan pengerukan sedimentasi lumpur pada gorong-gorong tahap 1.')
+                ->attach('@input-foto-progres', __DIR__.'/fixtures/sample_kerusakan.jpg')
+                ->press('@btn-submit-progres')
+                ->waitForText('Progres penanganan tugas berhasil diperbarui.')
+                ->assertSee('Progres penanganan tugas berhasil diperbarui.')
+                ->assertSee('Foto Dokumentasi Tersimpan')
+                ->assertSee('Sedang dilakukan pengerukan sedimentasi lumpur')
+                // PBI-21: Petugas dapat menutup tugas menggunakan foto yang sudah tersimpan (FR-21.2)
+                ->type('@input-catatan-perbaikan', 'Pekerjaan drainase tuntas 100%, saluran air telah mengalir normal kembali.')
+                ->press('@btn-submit-selesai')
+                ->waitForText('Perbaikan Tuntas')
+                ->assertSee('Perbaikan Tuntas')
+                ->assertSee('Tugas perbaikan lapangan berhasil diselesaikan')
+                // Verifikasi tugas selesai bersifat hanya-baca (FR-21.6)
+                ->assertMissing('@btn-submit-selesai')
+                ->assertMissing('@btn-submit-progres');
         });
     }
 

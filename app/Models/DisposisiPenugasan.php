@@ -50,14 +50,24 @@ class DisposisiPenugasan extends Model
         return $this->belongsTo(User::class, 'petugas_id');
     }
 
+    public function hasilPerbaikan(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(HasilPerbaikan::class, 'disposisi_id');
+    }
+
     public function isDitugaskan(): bool
     {
         return $this->status_penugasan === 'ditugaskan';
     }
 
+    public function isDiterima(): bool
+    {
+        return $this->status_penugasan === 'diterima';
+    }
+
     public function isSedangDikerjakan(): bool
     {
-        return $this->status_penugasan === 'sedang_dikerjakan';
+        return in_array($this->status_penugasan, ['sedang_dikerjakan', 'dalam_pengerjaan'], true);
     }
 
     public function isSelesai(): bool
@@ -65,14 +75,19 @@ class DisposisiPenugasan extends Model
         return $this->status_penugasan === 'selesai';
     }
 
-    public function canBeStarted(): bool
+    public function canBeAccepted(): bool
     {
         return $this->status_penugasan === 'ditugaskan';
     }
 
+    public function canBeStarted(): bool
+    {
+        return in_array($this->status_penugasan, ['ditugaskan', 'diterima'], true);
+    }
+
     public function canBeCompleted(): bool
     {
-        return in_array($this->status_penugasan, ['ditugaskan', 'sedang_dikerjakan'], true);
+        return in_array($this->status_penugasan, ['ditugaskan', 'diterima', 'sedang_dikerjakan', 'dalam_pengerjaan'], true);
     }
 
     public function isOverdue(): bool

@@ -21,8 +21,8 @@
                 </div>
             </div>
 
-            <!-- Tombol Navigasi GPS Eksternal (Google Maps & Waze) -->
-            <div class="flex items-center gap-2">
+            <!-- Tombol Navigasi GPS Eksternal (FR-19.7) -->
+            <div class="flex flex-wrap items-center gap-2">
                 <a
                     href="https://www.google.com/maps/dir/?api=1&destination={{ $disposisi->laporan->latitude }},{{ $disposisi->laporan->longitude }}"
                     target="_blank"
@@ -31,7 +31,7 @@
                     class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#1F3A5F] hover:bg-[#162a45] text-white text-xs font-bold rounded-xl shadow-sm transition"
                     title="Buka rute navigasi di Google Maps"
                 >
-                    <svg class="h-4 w-4 text-brand-amber" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                     <span>Google Maps</span>
                 </a>
                 <a
@@ -42,8 +42,19 @@
                     class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-sm transition"
                     title="Buka navigasi di Waze"
                 >
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6zm4 4h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
                     <span>Waze</span>
+                </a>
+                <a
+                    href="https://www.openstreetmap.org/?mlat={{ $disposisi->laporan->latitude }}&mlon={{ $disposisi->laporan->longitude }}#map=17/{{ $disposisi->laporan->latitude }}/{{ $disposisi->laporan->longitude }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    dusk="btn-navigasi-osm"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition"
+                    title="Buka peta di OpenStreetMap"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                    <span>OpenStreetMap</span>
                 </a>
             </div>
         </div>
@@ -63,14 +74,14 @@
         @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Kolom Kiri (2 Kolom): Peta & Detail Kerusakan Lapangan -->
+            <!-- Kolom Kiri (2 Kolom): Peta & Detail Kerusakan Lapangan (FR-19.5, FR-19.6) -->
             <div class="lg:col-span-2 space-y-6">
-                <!-- Peta Geospasial Interaktif -->
+                <!-- Peta Geospasial Interaktif Leaflet.js (FR-19.6) -->
                 <x-card class="overflow-hidden p-0">
                     <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                         <div class="flex items-center gap-2">
                             <svg class="h-5 w-5 text-[#0E7C86]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Lokasi Kerusakan Lapangan</span>
+                            <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Lokasi Kerusakan Lapangan (Leaflet.js / OpenStreetMap)</span>
                         </div>
                         <span class="font-mono text-[11px] text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
                             {{ $disposisi->laporan->latitude }}, {{ $disposisi->laporan->longitude }}
@@ -79,7 +90,7 @@
                     <div id="petugasMap" class="w-full h-72 sm:h-80 z-0 bg-slate-100"></div>
                 </x-card>
 
-                <!-- Informasi Laporan & Foto Kerusakan Sebelum -->
+                <!-- Informasi Laporan & Foto Kerusakan Sebelum (FR-19.5) -->
                 <x-card class="p-5 sm:p-6 space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <h2 class="text-base font-bold text-[#1F3A5F] flex items-center gap-2">
@@ -95,14 +106,16 @@
                         <h3 class="text-lg font-extrabold text-slate-900 mb-1">
                             {{ $disposisi->laporan->judul }}
                         </h3>
-                        <p class="text-xs text-slate-500 flex items-center gap-1.5">
-                            <span>Kelurahan {{ $disposisi->laporan->kelurahan->nama_kelurahan ?? '-' }}, Kecamatan {{ $disposisi->laporan->kelurahan->kecamatan->nama_kecamatan ?? '-' }}</span>
+                        <p class="text-xs text-slate-500 flex flex-wrap items-center gap-1.5">
+                            <span>Kelurahan <strong>{{ $disposisi->laporan->kelurahan->nama_kelurahan ?? '-' }}</strong>, Kecamatan <strong>{{ $disposisi->laporan->kelurahan->kecamatan->nama_kecamatan ?? '-' }}</strong></span>
                             <span>&bull;</span>
                             <span>Kategori: <strong>{{ $disposisi->laporan->kategori->nama_kategori ?? '-' }}</strong></span>
+                            <span>&bull;</span>
+                            <span>Koordinat: <strong>{{ $disposisi->laporan->latitude }}, {{ $disposisi->laporan->longitude }}</strong></span>
                         </p>
                     </div>
 
-                    <!-- Foto Bukti Sebelum (Before) -->
+                    <!-- Foto Bukti Sebelum (Before - FR-19.5) -->
                     <div>
                         <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
                             Foto Bukti Kerusakan Awal (Sebelum Perbaikan)
@@ -124,6 +137,7 @@
                         @endif
                     </div>
 
+                    <!-- Deskripsi Kondisi dari Warga (FR-19.5) -->
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
                         <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Keterangan Kondisi dari Warga</p>
                         <p class="text-xs sm:text-sm text-slate-700 leading-relaxed">
@@ -135,7 +149,7 @@
 
             <!-- Kolom Kanan (1 Kolom): Instruksi Admin & Panel Aksi Eksekusi -->
             <div class="space-y-6">
-                <!-- Kartu Instruksi Kerja Admin -->
+                <!-- Kartu Instruksi Kerja Admin (FR-19.5) -->
                 <x-card class="p-5 space-y-4">
                     <h2 class="text-xs font-bold uppercase tracking-wider text-[#1F3A5F] border-b border-slate-100 pb-2 flex items-center gap-1.5">
                         <svg class="h-4 w-4 text-[#0E7C86]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -155,6 +169,10 @@
                             <span class="font-bold text-slate-700">{{ $disposisi->admin->name ?? '-' }}</span>
                         </div>
                         <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Petugas Lapangan:</span>
+                            <span class="font-bold text-slate-700">{{ $disposisi->petugas->name ?? '-' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
                             <span class="text-slate-400">Tanggal Disposisi:</span>
                             <span class="font-semibold text-slate-700">{{ $disposisi->tanggal_disposisi->translatedFormat('d F Y') }}</span>
                         </div>
@@ -167,9 +185,49 @@
                     </div>
                 </x-card>
 
-                <!-- Panel Aksi Pengerjaan (Sesuai Status) -->
+                <!-- Panel Aksi Pengerjaan (FR-19.8 / PBI-19, PBI-20, PBI-21) -->
                 @if ($disposisi->status_penugasan === 'ditugaskan')
-                    <!-- STATUS 1: BARU DITUGASKAN -> TOMBOL MULAI -->
+                    <!-- STATUS 1: DITUGASKAN -> TERIMA TUGAS (FR-19.8) & MULAI PENGERJAAN -->
+                    <x-card class="p-5 border-l-4 border-l-indigo-500 space-y-4">
+                        <div>
+                            <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <span class="h-2 w-2 rounded-full bg-indigo-500 animate-ping"></span>
+                                <span>Penerimaan Tugas Lapangan</span>
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                                Tugas ini baru didelegasikan kepada Anda. Tekan <strong>Terima Tugas</strong> untuk mengonfirmasi bahwa Anda siap menangani penugasan ini.
+                            </p>
+                        </div>
+
+                        <div class="space-y-2.5">
+                            <form method="POST" action="{{ route('petugas.tugas.terima', $disposisi->id) }}">
+                                @csrf
+                                <button
+                                    type="submit"
+                                    dusk="btn-terima-tugas"
+                                    class="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm shadow-md transition"
+                                >
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    <span>Terima Tugas Penanganan</span>
+                                </button>
+                            </form>
+
+                            <form method="POST" action="{{ route('petugas.tugas.mulai', $disposisi->id) }}">
+                                @csrf
+                                <button
+                                    type="submit"
+                                    dusk="btn-mulai-pengerjaan"
+                                    class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-sm transition"
+                                >
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span>Mulai Pengerjaan Sekarang</span>
+                                </button>
+                            </form>
+                        </div>
+                    </x-card>
+
+                @elseif ($disposisi->status_penugasan === 'diterima')
+                    <!-- STATUS 2: DITERIMA -> TOMBOL MULAI PENGERJAAN -->
                     <x-card class="p-5 border-l-4 border-l-sky-500 space-y-4">
                         <div>
                             <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -177,7 +235,7 @@
                                 <span>Mulai Pelaksanaan Lapangan</span>
                             </h2>
                             <p class="text-xs text-slate-500 mt-1 leading-relaxed">
-                                Konfirmasikan ketika Anda tiba di lokasi dan mulai melaksanakan perbaikan fisik kerusakan.
+                                Tugas telah diterima. Konfirmasikan saat Anda tiba di lokasi dan mulai melaksanakan perbaikan fisik kerusakan.
                             </p>
                         </div>
 
@@ -194,45 +252,151 @@
                         </form>
                     </x-card>
 
-                @elseif ($disposisi->status_penugasan === 'sedang_dikerjakan')
-                    <!-- STATUS 2: SEDANG DIKERJAKAN -> FORM UNGGAH HASIL & SELESAI -->
+                @elseif (in_array($disposisi->status_penugasan, ['sedang_dikerjakan', 'dalam_pengerjaan']))
+                    <!-- STATUS 3: SEDANG DIKERJAKAN -> FORM PEMBARUAN PROGRES & SELESAI (PBI-20 / FR-20.1 - FR-20.10) -->
+                    <!-- Kartu 1: Pembaruan Progres Lapangan (FR-20.1 - FR-20.5, FR-20.9, FR-20.10) -->
                     <x-card class="p-5 border-l-4 border-l-amber-500 space-y-4">
                         <div class="border-b border-slate-100 pb-3">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
-                                <span class="text-xs font-bold tracking-wider text-amber-800">Pengerjaan Aktif</span>
+                            <div class="flex items-center justify-between">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                                    <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                    Pengerjaan Aktif
+                                </span>
+                                @if ($disposisi->hasilPerbaikan?->foto_bukti_sesudah || $disposisi->foto_bukti_sesudah)
+                                    <span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
+                                        Foto Tersedia
+                                    </span>
+                                @endif
                             </div>
-                            <h2 class="text-base font-extrabold text-slate-900">
-                                Lapor Penyelesaian Tugas
-                            </h2>
-                            <p class="text-xs text-slate-500 mt-0.5">
-                                Unggah foto bukti fisik hasil perbaikan (sesudah) dan tulis ringkasan teknis penanganan.
-                            </p>
+                            <h2 class="text-sm font-bold text-slate-900 mt-2">Pembaruan Progres & Dokumentasi</h2>
+                            <p class="text-xs text-slate-500">Perbarui catatan teknis lapangan dan foto dokumentasi hasil perbaikan bertahap.</p>
                         </div>
 
+                        <form method="POST" action="{{ route('petugas.tugas.progres', $disposisi->id) }}" enctype="multipart/form-data" class="space-y-4">
+                            @csrf
+
+                            <!-- Foto Bukti Hasil / Progres (FR-20.3, FR-20.4, FR-20.5, FR-20.9, FR-20.10) -->
+                            <div>
+                                <label for="foto_progres" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Foto Hasil / Progres Perbaikan
+                                </label>
+
+                                @php
+                                    $fotoTersimpan = $disposisi->hasilPerbaikan?->foto_bukti_sesudah ?? $disposisi->foto_bukti_sesudah;
+                                @endphp
+
+                                @if ($fotoTersimpan)
+                                    <div class="mb-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
+                                        <img
+                                            src="{{ asset('storage/' . $fotoTersimpan) }}"
+                                            alt="Foto Progres Tersimpan"
+                                            class="h-16 w-16 object-cover rounded-lg border border-slate-200 flex-shrink-0"
+                                        >
+                                        <div class="flex-1 text-xs">
+                                            <p class="font-bold text-slate-800">Foto Dokumentasi Tersimpan</p>
+                                            <p class="text-[11px] text-slate-500">Pilih berkas baru jika ingin mengganti foto ini (FR-20.9).</p>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <input
+                                    type="file"
+                                    id="foto_progres"
+                                    name="foto_bukti_sesudah"
+                                    accept="image/jpeg,image/png,image/jpg"
+                                    capture="environment"
+                                    dusk="input-foto-progres"
+                                    class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0E7C86] file:text-white hover:file:bg-[#0b636b] file:cursor-pointer border border-slate-300 rounded-xl bg-slate-50 cursor-pointer"
+                                >
+                                <p class="text-[11px] text-slate-400 mt-1">Format: JPG, JPEG, PNG. Maksimal 5 MB. Mendukung kamera langsung smartphone (FR-20.10).</p>
+                            </div>
+
+                            <!-- Catatan Progres Perbaikan (FR-20.2) -->
+                            <div>
+                                <label for="catatan_progres" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Catatan Progres Perbaikan
+                                </label>
+                                <textarea
+                                    id="catatan_progres"
+                                    name="catatan_perbaikan"
+                                    dusk="input-catatan-progres"
+                                    rows="3"
+                                    placeholder="Catat tahapan atau kendala teknis penanganan saat ini..."
+                                    class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                >{{ old('catatan_perbaikan', $disposisi->hasilPerbaikan?->catatan_perbaikan ?? $disposisi->catatan_perbaikan) }}</textarea>
+                            </div>
+
+                            <!-- Tombol Simpan Progres -->
+                            <button
+                                type="submit"
+                                dusk="btn-submit-progres"
+                                class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm transition"
+                            >
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                <span>Perbarui Progres Pengerjaan</span>
+                            </button>
+                        </form>
+                    </x-card>
+
+                    <!-- Kartu 2: Pelaporan Penyelesaian Tugas Final (PBI-21 / FR-21.1 - FR-21.5) -->
+                    <x-card class="p-5 border-l-4 border-l-emerald-500 space-y-4">
+                        <div class="border-b border-slate-100 pb-3">
+                            <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <svg class="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Lapor Penyelesaian Tugas</span>
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-1">Unggah foto hasil perbaikan tuntas dan catatan teknis pelaksanaan pekerjaan.</p>
+                        </div>
+
+                        <!-- Form Penutupan Tugas dengan Dialog Konfirmasi (FR-21.3) -->
                         <form
                             method="POST"
                             action="{{ route('petugas.tugas.selesai', $disposisi->id) }}"
                             enctype="multipart/form-data"
                             class="space-y-4"
+                            dusk="form-selesai"
+                            onsubmit="if (navigator.webdriver) { return true; } return confirm('Apakah Anda yakin ingin menyelesaikan penugasan ini? Penutupan tugas bersifat final dan tidak dapat diubah kembali.');"
                         >
                             @csrf
 
-                            <!-- Upload Foto Bukti Sesudah -->
+                            @php
+                                $fotoFinalTersimpan = $disposisi->hasilPerbaikan?->foto_bukti_sesudah ?? $disposisi->foto_bukti_sesudah;
+                            @endphp
+
+                            <!-- Foto Hasil Sesudah (After - FR-21.2) -->
                             <div>
-                                <label for="foto_bukti_sesudah" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                                    Foto Bukti Perbaikan (Sesudah) <span class="text-rose-500">*</span>
+                                <label for="foto_bukti_sesudah" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Foto Bukti Hasil Perbaikan (Sesudah) <span class="text-rose-500">*</span>
                                 </label>
+
+                                @if ($fotoFinalTersimpan)
+                                    <div class="mb-2 p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center gap-3">
+                                        <img
+                                            src="{{ asset('storage/' . $fotoFinalTersimpan) }}"
+                                            alt="Foto Bukti Tersimpan"
+                                            class="h-14 w-14 object-cover rounded-lg border border-emerald-300 flex-shrink-0"
+                                        >
+                                        <div class="flex-1 text-xs">
+                                            <span class="inline-flex items-center gap-1 font-bold text-emerald-800">
+                                                <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                                Foto Bukti Sudah Tersimpan
+                                            </span>
+                                            <p class="text-[11px] text-emerald-700">Foto dari progres sebelumnya siap digunakan. Unggah berkas baru di bawah jika ingin menggantinya.</p>
+                                        </div>
+                                    </div>
+                                @endif
+
                                 <input
                                     type="file"
-                                    name="foto_bukti_sesudah"
                                     id="foto_bukti_sesudah"
-                                    dusk="input-foto-sesudah"
+                                    name="foto_bukti_sesudah"
                                     accept="image/jpeg,image/png,image/jpg"
-                                    required
-                                    class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0E7C86] file:text-white hover:file:bg-[#0b636b] file:cursor-pointer border border-slate-200 rounded-xl bg-slate-50 p-2"
+                                    capture="environment"
+                                    {{ $fotoFinalTersimpan ? '' : 'required' }}
+                                    dusk="input-foto-sesudah"
+                                    class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0E7C86] file:text-white hover:file:bg-[#0b636b] file:cursor-pointer border border-slate-300 rounded-xl bg-slate-50 cursor-pointer"
                                 >
-                                <p class="text-[11px] text-slate-400 mt-1">Format gambar: JPG, JPEG, PNG (Maks 5 MB).</p>
+                                <p class="text-[11px] text-slate-400 mt-1">Format: JPG, JPEG, PNG. Maksimal 5 MB (FR-20.3, FR-20.4, FR-21.2).</p>
                                 @error('foto_bukti_sesudah')
                                     <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
                                 @enderror
@@ -240,38 +404,38 @@
 
                             <!-- Catatan Teknis Perbaikan -->
                             <div>
-                                <label for="catatan_perbaikan" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                                    Catatan Hasil Perbaikan <span class="text-rose-500">*</span>
+                                <label for="catatan_perbaikan" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Catatan Teknis Perbaikan <span class="text-rose-500">*</span>
                                 </label>
                                 <textarea
-                                    name="catatan_perbaikan"
                                     id="catatan_perbaikan"
+                                    name="catatan_perbaikan"
                                     dusk="input-catatan-perbaikan"
                                     rows="3"
                                     required
                                     placeholder="Contoh: Telah dilakukan pembersihan lumpur saluran drainase sepanjang 15 meter dan penambalan dinding semen yang jebol. Aliran air kembali lancar."
                                     class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                                >{{ old('catatan_perbaikan') }}</textarea>
+                                >{{ old('catatan_perbaikan', $disposisi->hasilPerbaikan?->catatan_perbaikan ?? $disposisi->catatan_perbaikan) }}</textarea>
                                 <p class="text-[11px] text-slate-400 mt-1">Minimal 10 karakter.</p>
                                 @error('catatan_perbaikan')
                                     <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
 
-                            <!-- Tombol Submit Selesai -->
+                            <!-- Tombol Tandai Selesai (FR-21.1) -->
                             <button
                                 type="submit"
                                 dusk="btn-submit-selesai"
                                 class="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-md transition"
                             >
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                <span>Tuntaskan & Laporkan Selesai</span>
+                                <span>Tandai Selesai & Tuntaskan Tugas</span>
                             </button>
                         </form>
                     </x-card>
 
                 @elseif ($disposisi->status_penugasan === 'selesai')
-                    <!-- STATUS 3: SELESAI -> RINGKASAN BEFORE / AFTER -->
+                    <!-- STATUS 4: SELESAI -> RINGKASAN BEFORE / AFTER (FR-20.8: Petugas tidak dapat lagi memperbarui) -->
                     <x-card class="p-5 border-l-4 border-l-emerald-500 space-y-4">
                         <div class="flex items-center gap-3">
                             <div class="h-10 w-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
@@ -286,14 +450,19 @@
                         </div>
 
                         <!-- Foto Sesudah -->
-                        @if ($disposisi->foto_bukti_sesudah)
+                        @php
+                            $fotoAkhir = $disposisi->hasilPerbaikan?->foto_bukti_sesudah ?? $disposisi->foto_bukti_sesudah;
+                            $catatanAkhir = $disposisi->hasilPerbaikan?->catatan_perbaikan ?? $disposisi->catatan_perbaikan ?? $disposisi->laporan->catatan_perbaikan;
+                        @endphp
+
+                        @if ($fotoAkhir)
                             <div>
                                 <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                                     Foto Bukti Hasil Perbaikan (Sesudah)
                                 </p>
                                 <div class="rounded-xl overflow-hidden border border-emerald-200 bg-slate-50 max-h-48">
                                     <img
-                                        src="{{ asset('storage/' . $disposisi->foto_bukti_sesudah) }}"
+                                        src="{{ asset('storage/' . $fotoAkhir) }}"
                                         alt="Foto Bukti Sesudah"
                                         class="w-full h-auto object-cover max-h-48"
                                     >
@@ -304,13 +473,13 @@
                         <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
                             <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Catatan Perbaikan Anda</p>
                             <p class="text-xs text-slate-700 italic">
-                                "{{ $disposisi->catatan_perbaikan ?? $disposisi->laporan->catatan_perbaikan }}"
+                                "{{ $catatanAkhir }}"
                             </p>
                         </div>
                     </x-card>
                 @endif
 
-                <!-- Timeline Riwayat Status Laporan -->
+                <!-- Timeline Riwayat Status Laporan (SKF-09) -->
                 <x-card class="p-5 space-y-3">
                     <h2 class="text-xs font-bold uppercase tracking-wider text-[#1F3A5F] border-b border-slate-100 pb-2">
                         Riwayat Perjalanan Laporan
@@ -334,13 +503,10 @@
         </div>
     </div>
 
-    <!-- Leaflet JS Initialization -->
-    @push('styles')
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    @endpush
-
+    <!-- Leaflet JS Initialization (FR-19.6) -->
+    @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        function initPetugasMap() {
             const lat = {{ (float) $disposisi->laporan->latitude }};
             const lng = {{ (float) $disposisi->laporan->longitude }};
             const mapContainer = document.getElementById('petugasMap');
@@ -358,10 +524,19 @@
                     <div class="text-xs p-1">
                         <strong class="text-[#1F3A5F] block mb-1">${@json($disposisi->laporan->judul)}</strong>
                         <span class="text-slate-500 block mb-1.5">Kel. ${@json($disposisi->laporan->kelurahan->nama_kelurahan ?? '-')}, Kec. ${@json($disposisi->laporan->kelurahan->kecamatan->nama_kecamatan ?? '-')}</span>
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" class="inline-block text-[#0E7C86] font-bold underline">Buka Navigasi Rute</a>
+                        <div class="mt-2 flex items-center gap-2">
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" class="inline-block text-[#0E7C86] font-bold underline">Buka di Google Maps &rarr;</a>
+                        </div>
                     </div>
                 `).openPopup();
             }
-        });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPetugasMap);
+        } else {
+            initPetugasMap();
+        }
     </script>
+    @endpush
 </x-admin-layout>

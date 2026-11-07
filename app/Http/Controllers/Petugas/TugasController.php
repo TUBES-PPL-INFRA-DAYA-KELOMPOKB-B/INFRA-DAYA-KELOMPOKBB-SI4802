@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Petugas;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Petugas\SelesaikanTugasRequest;
+use App\Http\Requests\Petugas\UpdateProgresRequest;
 use App\Services\PetugasService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,17 +23,19 @@ class TugasController extends Controller
     {
         $status = $request->query('status');
         $search = $request->query('search');
+        $sort = $request->query('sort');
         $petugasId = (int) auth()->id();
 
         $tugasList = $this->petugasService->getPaginatedTugas(
             $petugasId,
             $status === 'semua' ? null : $status,
-            $search
+            $search,
+            $sort
         );
 
         $stats = $this->petugasService->getStatistikTugas($petugasId);
 
-        return view('petugas.tugas.index', compact('tugasList', 'stats', 'status', 'search'));
+        return view('petugas.tugas.index', compact('tugasList', 'stats', 'status', 'search', 'sort'));
     }
 
     /**
@@ -43,6 +46,18 @@ class TugasController extends Controller
         $disposisi = $this->petugasService->getTugasDetail($id, (int) auth()->id());
 
         return view('petugas.tugas.show', compact('disposisi'));
+    }
+
+    /**
+     * Menerima tugas penugasan oleh petugas lapangan (FR-19.8 / PBI-19).
+     */
+    public function acceptTask(int $id): RedirectResponse
+    {
+        $disposisi = $this->petugasService->acceptTask($id, (int) auth()->id());
+
+        return redirect()
+            ->route('petugas.tugas.show', $disposisi->id)
+            ->with('success', 'Tugas perbaikan berhasil diterima. Status penugasan kini menjadi Diterima.');
     }
 
     /**
@@ -58,7 +73,25 @@ class TugasController extends Controller
     }
 
     /**
-     * Menyelesaikan tugas dengan mengunggah bukti perbaikan dan catatan teknis.
+     * Memperbarui progres pekerjaan, catatan perbaikan, dan/atau foto hasil (PBI-20 / FR-20.1 - FR-20.10).
+     */
+    public function updateProgres(UpdateProgresRequest $request, int $id): RedirectResponse
+    {
+        $disposisi = $this->petugasService->updateProgres(
+            $id,
+            (int) auth()->id(),
+            $request->validated('catatan_perbaikan'),
+            $request->file('foto_bukti_sesudah'),
+            $request->validated('status_penugasan')
+        );
+
+        return redirect()
+            ->route('petugas.tugas.show', $disposisi->id)
+            ->with('success', 'Progres penanganan tugas berhasil diperbarui.');
+    }
+
+    /**
+     * Menyelesaikan tugas dengan mengunggah bukti perbaikan dan catatan teknis (PBI-21 / FR-21.1 - FR-21.7).
      */
     public function selesai(SelesaikanTugasRequest $request, int $id): RedirectResponse
     {
@@ -72,5 +105,13 @@ class TugasController extends Controller
         return redirect()
             ->route('petugas.tugas.show', $disposisi->id)
             ->with('success', 'Tugas perbaikan lapangan berhasil diselesaikan. Status laporan kini menjadi Selesai.');
+    }
+
+    /**
+     * Aksi completeTask sesuai penamaan spesifikasi FR-21.1 pada PRD.
+     */
+    public function completeTask(SelesaikanTugasRequest $request, int $id): RedirectResponse
+    {
+        return $this->selesai($request, $id);
     }
 }

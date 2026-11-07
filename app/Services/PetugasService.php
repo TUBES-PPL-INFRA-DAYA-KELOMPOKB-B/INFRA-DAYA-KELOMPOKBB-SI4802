@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\DisposisiPenugasan;
+use App\Models\HasilPerbaikan;
 use App\Models\RiwayatStatus;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -198,11 +199,13 @@ class PetugasService
 
     /**
      * Mengambil daftar tugas penugasan lapangan milik petugas tertentu secara terpaginasi.
+     * Sesuai FR-19.1 - FR-19.4: filter status, pencarian, dan pengurutan default prioritas tertinggi lalu disposisi terlama.
      */
     public function getPaginatedTugas(
         int $petugasId,
         ?string $status = null,
         ?string $search = null,
+        ?string $sort = null,
         int $perPage = 9
     ): LengthAwarePaginator {
         $query = DisposisiPenugasan::with([
@@ -213,8 +216,12 @@ class PetugasService
         ])
             ->where('petugas_id', $petugasId);
 
-        if ($status && in_array($status, ['ditugaskan', 'sedang_dikerjakan', 'selesai'], true)) {
-            $query->where('status_penugasan', $status);
+        if ($status && in_array(strtolower($status), ['ditugaskan', 'diterima', 'sedang_dikerjakan', 'dalam_pengerjaan', 'selesai'], true)) {
+            if (in_array(strtolower($status), ['sedang_dikerjakan', 'dalam_pengerjaan'], true)) {
+                $query->whereIn('status_penugasan', ['sedang_dikerjakan', 'dalam_pengerjaan']);
+            } else {
+                $query->where('status_penugasan', strtolower($status));
+            }
         }
 
         if ($search) {
@@ -234,17 +241,32 @@ class PetugasService
             });
         }
 
-        return $query->orderByRaw("
-            CASE status_penugasan
-                WHEN 'sedang_dikerjakan' THEN 1
-                WHEN 'ditugaskan' THEN 2
-                WHEN 'selesai' THEN 3
-                ELSE 4
-            END ASC
-        ")
-            ->orderBy('tenggat_waktu', 'asc')
-            ->paginate($perPage)
-            ->withQueryString();
+        $query->join('laporan_kerusakan', 'disposisi_penugasan.laporan_id', '=', 'laporan_kerusakan.id')
+            ->select('disposisi_penugasan.*');
+
+        if ($sort === 'terbaru') {
+            $query->orderBy('disposisi_penugasan.tanggal_disposisi', 'desc')
+                  ->orderBy('disposisi_penugasan.id', 'desc');
+        } elseif ($sort === 'terlama') {
+            $query->orderBy('disposisi_penugasan.tanggal_disposisi', 'asc')
+                  ->orderBy('disposisi_penugasan.id', 'asc');
+        } elseif ($sort === 'tenggat') {
+            $query->orderBy('disposisi_penugasan.tenggat_waktu', 'asc');
+        } else {
+            // Default FR-19.3: Prioritas tertinggi lalu tanggal disposisi terlama
+            $query->orderByRaw("
+                CASE laporan_kerusakan.prioritas
+                    WHEN 'tinggi' THEN 1
+                    WHEN 'sedang' THEN 2
+                    WHEN 'rendah' THEN 3
+                    ELSE 4
+                END ASC
+            ")
+            ->orderBy('disposisi_penugasan.tanggal_disposisi', 'asc')
+            ->orderBy('disposisi_penugasan.id', 'asc');
+        }
+
+        return $query->paginate($perPage)->withQueryString();
     }
 
     /**
@@ -259,6 +281,7 @@ class PetugasService
             'laporan.riwayatStatus.user',
             'admin',
             'petugas',
+            'hasilPerbaikan',
         ])->findOrFail($disposisiId);
 
         if ($disposisi->petugas_id !== $petugasId) {
@@ -266,6 +289,37 @@ class PetugasService
         }
 
         return $disposisi;
+    }
+
+    /**
+     * Menerima tugas penugasan oleh petugas lapangan (FR-19.8 / PBI-19).
+     * Mengubah status penugasan dari 'ditugaskan' menjadi 'diterima' dan mencatat riwayat log.
+     */
+    public function acceptTask(int $disposisiId, int $petugasId): DisposisiPenugasan
+    {
+        $disposisi = $this->getTugasDetail($disposisiId, $petugasId);
+
+        if (! $disposisi->canBeAccepted()) {
+            throw new HttpException(422, 'Tugas ini tidak dalam status siap diterima (status saat ini: ' . $disposisi->status_penugasan . ').');
+        }
+
+        return DB::transaction(function () use ($disposisi, $petugasId) {
+            $disposisi->update([
+                'status_penugasan' => 'diterima',
+            ]);
+
+            $petugas = User::find($petugasId);
+            $namaPetugas = $petugas ? $petugas->name : 'Petugas Lapangan';
+
+            RiwayatStatus::create([
+                'laporan_id' => $disposisi->laporan_id,
+                'user_id' => $petugasId,
+                'status' => 'diproses',
+                'keterangan' => "Tugas penanganan laporan diterima oleh petugas {$namaPetugas}.",
+            ]);
+
+            return $disposisi->fresh();
+        });
     }
 
     /**
@@ -299,18 +353,130 @@ class PetugasService
     }
 
     /**
-     * Menyelesaikan tugas pengerjaan dengan unggahan foto bukti sesudah dan catatan teknis.
+     * Memperbarui progres pengerjaan, catatan perbaikan, dan/atau foto bukti perbaikan (PBI-20).
+     * Sesuai FR-20.1 - FR-20.9.
+     */
+    public function updateProgres(
+        int $disposisiId,
+        int $petugasId,
+        ?string $catatanPerbaikan = null,
+        ?UploadedFile $fotoBukti = null,
+        ?string $statusPenugasan = null
+    ): DisposisiPenugasan {
+        $disposisi = $this->getTugasDetail($disposisiId, $petugasId);
+
+        // FR-20.8: Petugas hanya dapat memperbarui progres dan mengunggah foto untuk tugas yang ditugaskan kepada dirinya dan belum ditutup/selesai.
+        if ($disposisi->isSelesai()) {
+            throw new HttpException(422, 'Tugas ini sudah selesai dan tidak dapat diperbarui lagi.');
+        }
+
+        // Tentukan status penugasan baru jika diberikan atau transisi otomatis (FR-20.1)
+        $targetStatus = $statusPenugasan ?: $disposisi->status_penugasan;
+
+        // Jika saat ini 'ditugaskan' atau 'diterima', dan petugas memperbarui progres, maka otomatis beralih ke 'sedang_dikerjakan'
+        if (in_array($disposisi->status_penugasan, ['ditugaskan', 'diterima'], true) && ! $statusPenugasan) {
+            $targetStatus = 'sedang_dikerjakan';
+        }
+
+        if ($targetStatus === 'dalam_pengerjaan') {
+            $targetStatus = 'sedang_dikerjakan';
+        }
+
+        return DB::transaction(function () use ($disposisi, $petugasId, $catatanPerbaikan, $fotoBukti, $targetStatus) {
+            $path = null;
+            if ($fotoBukti) {
+                // FR-20.3, FR-20.4, FR-20.5: Simpan foto dengan nama unik di local asset storage
+                $path = FileUploadService::storePublicFile($fotoBukti, 'laporan/sesudah');
+            }
+
+            // FR-20.5 & Bagian 6 PRD: Simpan / perbarui pada tabel hasil_perbaikan
+            $hasilData = [
+                'petugas_id' => $petugasId,
+            ];
+
+            if ($catatanPerbaikan !== null) {
+                $hasilData['catatan_perbaikan'] = $catatanPerbaikan;
+            }
+
+            if ($path !== null) {
+                $hasilData['foto_bukti_sesudah'] = $path;
+            }
+
+            HasilPerbaikan::updateOrCreate(
+                ['disposisi_id' => $disposisi->id],
+                $hasilData
+            );
+
+            $oldStatus = $disposisi->status_penugasan;
+            $statusChanged = $oldStatus !== $targetStatus;
+
+            $disposisiUpdate = [
+                'status_penugasan' => $targetStatus,
+            ];
+            if ($catatanPerbaikan !== null) {
+                $disposisiUpdate['catatan_perbaikan'] = $catatanPerbaikan;
+            }
+            if ($path !== null) {
+                $disposisiUpdate['foto_bukti_sesudah'] = $path;
+            }
+            $disposisi->update($disposisiUpdate);
+
+            // FR-20.7: Status laporan kerusakan utama otomatis tersinkronisasi menjadi 'diproses' saat penugasan dalam pengerjaan
+            $laporanUpdate = [];
+            if ($targetStatus === 'sedang_dikerjakan') {
+                $laporanUpdate['status'] = 'diproses';
+            }
+            if ($catatanPerbaikan !== null) {
+                $laporanUpdate['catatan_perbaikan'] = $catatanPerbaikan;
+            }
+            if ($path !== null) {
+                $laporanUpdate['foto_bukti_sesudah'] = $path;
+            }
+            if (! empty($laporanUpdate)) {
+                $disposisi->laporan->update($laporanUpdate);
+            }
+
+            $petugas = User::find($petugasId);
+            $namaPetugas = $petugas ? $petugas->name : 'Petugas Lapangan';
+
+            // FR-20.6: Setiap perubahan status tercatat secara otomatis pada log riwayat status
+            $keteranganLog = "Progres penanganan diperbarui oleh {$namaPetugas}.";
+            if ($statusChanged) {
+                $keteranganLog = "Status penugasan diubah menjadi [{$targetStatus}] oleh {$namaPetugas}.";
+            }
+            if ($catatanPerbaikan) {
+                $keteranganLog .= " Catatan: {$catatanPerbaikan}";
+            }
+            if ($path) {
+                $keteranganLog .= " (Foto bukti hasil perbaikan diunggah)";
+            }
+
+            RiwayatStatus::create([
+                'laporan_id' => $disposisi->laporan_id,
+                'user_id' => $petugasId,
+                'status' => 'diproses',
+                'keterangan' => $keteranganLog,
+            ]);
+
+            return $disposisi->fresh(['hasilPerbaikan', 'laporan.riwayatStatus.user']);
+        });
+    }
+
+    /**
+     * Menyelesaikan tugas pengerjaan dengan unggahan foto bukti sesudah dan catatan teknis (PBI-21 / FR-21.1 - FR-21.7).
+     * Dapat dipanggil melalui aksi completeTask().
      */
     public function selesaikanTugas(
         int $disposisiId,
         int $petugasId,
-        UploadedFile $fotoSesudah,
+        ?UploadedFile $fotoSesudah,
         string $catatanPerbaikan
     ): DisposisiPenugasan {
         $disposisi = $this->getTugasDetail($disposisiId, $petugasId);
 
-        if (! $disposisi->canBeCompleted()) {
-            throw new HttpException(422, 'Tugas ini sudah selesai atau tidak dapat diselesaikan.');
+        // FR-21.7: Tugas yang sudah selesai tidak dapat ditutup ulang (penutupan ganda ditolak)
+        if (! $disposisi->canBeCompleted() || $disposisi->isSelesai()) {
+            throw new HttpException(422, 'Tugas ini sudah selesai atau tidak dapat diselesaikan kembali.');
         }
 
         $path = FileUploadService::storePublicFile($fotoSesudah, 'laporan/sesudah');
@@ -342,8 +508,20 @@ class PetugasService
                 'keterangan' => "Perbaikan tuntas oleh {$namaPetugas}. Catatan: {$catatanPerbaikan}",
             ]);
 
-            return $disposisi->fresh();
+            return $disposisi->fresh(['hasilPerbaikan']);
         });
+    }
+
+    /**
+     * Alias aksi completeTask sesuai FR-21.1 pada PRD.
+     */
+    public function completeTask(
+        int $disposisiId,
+        int $petugasId,
+        ?UploadedFile $fotoSesudah,
+        string $catatanPerbaikan
+    ): DisposisiPenugasan {
+        return $this->selesaikanTugas($disposisiId, $petugasId, $fotoSesudah, $catatanPerbaikan);
     }
 
     /**
@@ -356,7 +534,8 @@ class PetugasService
         return [
             'total' => (clone $baseQuery)->count(),
             'ditugaskan' => (clone $baseQuery)->where('status_penugasan', 'ditugaskan')->count(),
-            'sedang_dikerjakan' => (clone $baseQuery)->where('status_penugasan', 'sedang_dikerjakan')->count(),
+            'diterima' => (clone $baseQuery)->where('status_penugasan', 'diterima')->count(),
+            'sedang_dikerjakan' => (clone $baseQuery)->whereIn('status_penugasan', ['sedang_dikerjakan', 'dalam_pengerjaan'])->count(),
             'selesai' => (clone $baseQuery)->where('status_penugasan', 'selesai')->count(),
         ];
     }
