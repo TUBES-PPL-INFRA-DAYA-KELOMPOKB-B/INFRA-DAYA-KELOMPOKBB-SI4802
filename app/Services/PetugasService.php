@@ -15,11 +15,13 @@ class PetugasService
 {
     /**
      * Mengambil daftar tugas penugasan lapangan milik petugas tertentu secara terpaginasi.
+     * Sesuai FR-19.1 - FR-19.4: filter status, pencarian, dan pengurutan default prioritas tertinggi lalu disposisi terlama.
      */
     public function getPaginatedTugas(
         int $petugasId,
         ?string $status = null,
         ?string $search = null,
+        ?string $sort = null,
         int $perPage = 9
     ): LengthAwarePaginator {
         $query = DisposisiPenugasan::with([
@@ -30,8 +32,12 @@ class PetugasService
         ])
             ->where('petugas_id', $petugasId);
 
-        if ($status && in_array($status, ['ditugaskan', 'sedang_dikerjakan', 'selesai'], true)) {
-            $query->where('status_penugasan', $status);
+        if ($status && in_array(strtolower($status), ['ditugaskan', 'diterima', 'sedang_dikerjakan', 'dalam_pengerjaan', 'selesai'], true)) {
+            if (in_array(strtolower($status), ['sedang_dikerjakan', 'dalam_pengerjaan'], true)) {
+                $query->whereIn('status_penugasan', ['sedang_dikerjakan', 'dalam_pengerjaan']);
+            } else {
+                $query->where('status_penugasan', strtolower($status));
+            }
         }
 
         if ($search) {
@@ -51,17 +57,32 @@ class PetugasService
             });
         }
 
-        return $query->orderByRaw("
-            CASE status_penugasan
-                WHEN 'sedang_dikerjakan' THEN 1
-                WHEN 'ditugaskan' THEN 2
-                WHEN 'selesai' THEN 3
-                ELSE 4
-            END ASC
-        ")
-            ->orderBy('tenggat_waktu', 'asc')
-            ->paginate($perPage)
-            ->withQueryString();
+        $query->join('laporan_kerusakan', 'disposisi_penugasan.laporan_id', '=', 'laporan_kerusakan.id')
+            ->select('disposisi_penugasan.*');
+
+        if ($sort === 'terbaru') {
+            $query->orderBy('disposisi_penugasan.tanggal_disposisi', 'desc')
+                  ->orderBy('disposisi_penugasan.id', 'desc');
+        } elseif ($sort === 'terlama') {
+            $query->orderBy('disposisi_penugasan.tanggal_disposisi', 'asc')
+                  ->orderBy('disposisi_penugasan.id', 'asc');
+        } elseif ($sort === 'tenggat') {
+            $query->orderBy('disposisi_penugasan.tenggat_waktu', 'asc');
+        } else {
+            // Default FR-19.3: Prioritas tertinggi lalu tanggal disposisi terlama
+            $query->orderByRaw("
+                CASE laporan_kerusakan.prioritas
+                    WHEN 'tinggi' THEN 1
+                    WHEN 'sedang' THEN 2
+                    WHEN 'rendah' THEN 3
+                    ELSE 4
+                END ASC
+            ")
+            ->orderBy('disposisi_penugasan.tanggal_disposisi', 'asc')
+            ->orderBy('disposisi_penugasan.id', 'asc');
+        }
+
+        return $query->paginate($perPage)->withQueryString();
     }
 
     /**
@@ -83,6 +104,37 @@ class PetugasService
         }
 
         return $disposisi;
+    }
+
+    /**
+     * Menerima tugas penugasan oleh petugas lapangan (FR-19.8 / PBI-19).
+     * Mengubah status penugasan dari 'ditugaskan' menjadi 'diterima' dan mencatat riwayat log.
+     */
+    public function acceptTask(int $disposisiId, int $petugasId): DisposisiPenugasan
+    {
+        $disposisi = $this->getTugasDetail($disposisiId, $petugasId);
+
+        if (! $disposisi->canBeAccepted()) {
+            throw new HttpException(422, 'Tugas ini tidak dalam status siap diterima (status saat ini: ' . $disposisi->status_penugasan . ').');
+        }
+
+        return DB::transaction(function () use ($disposisi, $petugasId) {
+            $disposisi->update([
+                'status_penugasan' => 'diterima',
+            ]);
+
+            $petugas = User::find($petugasId);
+            $namaPetugas = $petugas ? $petugas->name : 'Petugas Lapangan';
+
+            RiwayatStatus::create([
+                'laporan_id' => $disposisi->laporan_id,
+                'user_id' => $petugasId,
+                'status' => 'diproses',
+                'keterangan' => "Tugas penanganan laporan diterima oleh petugas {$namaPetugas}.",
+            ]);
+
+            return $disposisi->fresh();
+        });
     }
 
     /**
@@ -177,7 +229,8 @@ class PetugasService
         return [
             'total' => (clone $baseQuery)->count(),
             'ditugaskan' => (clone $baseQuery)->where('status_penugasan', 'ditugaskan')->count(),
-            'sedang_dikerjakan' => (clone $baseQuery)->where('status_penugasan', 'sedang_dikerjakan')->count(),
+            'diterima' => (clone $baseQuery)->where('status_penugasan', 'diterima')->count(),
+            'sedang_dikerjakan' => (clone $baseQuery)->whereIn('status_penugasan', ['sedang_dikerjakan', 'dalam_pengerjaan'])->count(),
             'selesai' => (clone $baseQuery)->where('status_penugasan', 'selesai')->count(),
         ];
     }

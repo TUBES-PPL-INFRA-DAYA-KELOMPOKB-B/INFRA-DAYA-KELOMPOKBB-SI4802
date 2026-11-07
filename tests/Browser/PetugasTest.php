@@ -127,6 +127,25 @@ class PetugasTest extends DuskTestCase
     }
 
     /**
+     * TC-19-05: Petugas dapat menerima tugas penugasan lapangan (FR-19.8).
+     */
+    public function test_petugas_can_accept_task(): void
+    {
+        $data = $this->createData();
+
+        $this->browse(function (Browser $browser) use ($data) {
+            $browser->loginAs($data['petugas'])
+                ->visit(route('petugas.tugas.show', $data['disposisi']->id))
+                ->assertSee('Ditugaskan')
+                ->assertPresent('@btn-terima-tugas')
+                ->press('@btn-terima-tugas')
+                ->waitForText('Diterima')
+                ->assertSee('Diterima')
+                ->assertSee('Tugas perbaikan berhasil diterima');
+        });
+    }
+
+    /**
      * Petugas dapat memulai pengerjaan fisik dan melaporkan penyelesaian dengan foto bukti sesudah.
      */
     public function test_petugas_can_start_and_complete_task_with_after_photo(): void

@@ -22,17 +22,19 @@ class TugasController extends Controller
     {
         $status = $request->query('status');
         $search = $request->query('search');
+        $sort = $request->query('sort');
         $petugasId = (int) auth()->id();
 
         $tugasList = $this->petugasService->getPaginatedTugas(
             $petugasId,
             $status === 'semua' ? null : $status,
-            $search
+            $search,
+            $sort
         );
 
         $stats = $this->petugasService->getStatistikTugas($petugasId);
 
-        return view('petugas.tugas.index', compact('tugasList', 'stats', 'status', 'search'));
+        return view('petugas.tugas.index', compact('tugasList', 'stats', 'status', 'search', 'sort'));
     }
 
     /**
@@ -43,6 +45,18 @@ class TugasController extends Controller
         $disposisi = $this->petugasService->getTugasDetail($id, (int) auth()->id());
 
         return view('petugas.tugas.show', compact('disposisi'));
+    }
+
+    /**
+     * Menerima tugas penugasan oleh petugas lapangan (FR-19.8 / PBI-19).
+     */
+    public function acceptTask(int $id): RedirectResponse
+    {
+        $disposisi = $this->petugasService->acceptTask($id, (int) auth()->id());
+
+        return redirect()
+            ->route('petugas.tugas.show', $disposisi->id)
+            ->with('success', 'Tugas perbaikan berhasil diterima. Status penugasan kini menjadi Diterima.');
     }
 
     /**

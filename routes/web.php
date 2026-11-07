@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\KelurahanController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VerifikasiController;
 use App\Http\Controllers\Api\WilayahController;
+use App\Http\Controllers\Petugas\TugasController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Warga\LaporanController;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,10 @@ Route::get('/lacak-tiket', function () {
 
 // Dashboard Utama Terotentikasi
 Route::get('/dashboard', function () {
+    if (auth()->user()?->isPetugas()) {
+        return redirect()->route('petugas.tugas.index');
+    }
+
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -73,9 +78,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/rekap', fn () => redirect()->route('dashboard'))->name('rekap.index');
     });
 
-    // Route Petugas Lapangan
+    // Route Petugas Lapangan (PBI-19, PBI-20, PBI-21)
     Route::middleware('role:petugas')->prefix('petugas')->name('petugas.')->group(function () {
-        Route::get('/tugas', fn () => redirect()->route('dashboard'))->name('tugas.index');
+        Route::get('/tugas', [TugasController::class, 'index'])->name('tugas.index');
+        Route::get('/tugas/{id}', [TugasController::class, 'show'])->name('tugas.show');
+        Route::post('/tugas/{id}/terima', [TugasController::class, 'acceptTask'])->name('tugas.terima');
+        Route::post('/tugas/{id}/mulai', [TugasController::class, 'mulai'])->name('tugas.mulai');
+        Route::post('/tugas/{id}/selesai', [TugasController::class, 'selesai'])->name('tugas.selesai');
     });
 
     // Route Pimpinan Eksekutif
