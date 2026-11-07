@@ -11,6 +11,46 @@ class LaporanKerusakanRequest extends FormRequest
         return auth()->check() && auth()->user()->isWarga();
     }
 
+    /**
+     * Sanitasi input form sebelum validasi untuk mencegah stored XSS (NFR-02).
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('judul')) {
+            $this->merge([
+                'judul' => $this->sanitizeInput($this->input('judul')),
+            ]);
+        }
+
+        if ($this->has('deskripsi_kondisi')) {
+            $this->merge([
+                'deskripsi_kondisi' => $this->sanitizeInput($this->input('deskripsi_kondisi')),
+            ]);
+        }
+
+        if ($this->has('patokan_lokasi')) {
+            $this->merge([
+                'patokan_lokasi' => $this->sanitizeInput($this->input('patokan_lokasi')),
+            ]);
+        }
+    }
+
+    private function sanitizeInput(?string $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        // Hapus elemen script & style beserta isinya
+        $clean = preg_replace('#<script\b[^>]*>(.*?)<\/script>#is', '', $value);
+        $clean = preg_replace('#<style\b[^>]*>(.*?)<\/style>#is', '', $clean);
+
+        // Hapus seluruh tag HTML lainnya
+        $clean = strip_tags($clean);
+
+        return trim($clean);
+    }
+
     public function rules(): array
     {
         $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
@@ -18,15 +58,16 @@ class LaporanKerusakanRequest extends FormRequest
         return [
             'judul' => ['required', 'string', 'max:150'],
             'kategori_id' => ['required', 'exists:kategori_infrastruktur,id'],
-            'kelurahan_id' => ['required', 'exists:kelurahan,id'],
+            'kelurahan_id' => ['nullable', 'exists:kelurahan,id'],
             'deskripsi_kondisi' => ['required', 'string', 'max:2000'],
+            'patokan_lokasi' => ['nullable', 'string', 'max:255'],
             'latitude' => ['required', 'numeric', 'between:-7.05000000,-6.80000000'],
             'longitude' => ['required', 'numeric', 'between:107.50000000,107.80000000'],
             'foto_bukti_sebelum' => [
                 $isUpdate ? 'nullable' : 'required',
                 'image',
                 'mimes:jpg,jpeg,png',
-                'max:5120', // Maksimal 5MB sesuai spesifikasi
+                'max:5120', // Maksimal 5MB sesuai standar keamanan NFR-02
             ],
         ];
     }
@@ -43,8 +84,10 @@ class LaporanKerusakanRequest extends FormRequest
             'deskripsi_kondisi.required' => 'Deskripsi kondisi kerusakan wajib diisi.',
             'deskripsi_kondisi.max' => 'Deskripsi maksimal 2000 karakter.',
             'latitude.required' => 'Titik koordinat latitude wajib ditentukan pada peta.',
+            'latitude.numeric' => 'Format koordinat latitude harus berupa desimal numerik valid.',
             'latitude.between' => 'Koordinat berada di luar rentang administratif Kota Bandung.',
             'longitude.required' => 'Titik koordinat longitude wajib ditentukan pada peta.',
+            'longitude.numeric' => 'Format koordinat longitude harus berupa desimal numerik valid.',
             'longitude.between' => 'Koordinat berada di luar rentang administratif Kota Bandung.',
             'foto_bukti_sebelum.required' => 'Foto bukti kondisi kerusakan wajib diunggah.',
             'foto_bukti_sebelum.image' => 'File bukti harus berupa gambar.',

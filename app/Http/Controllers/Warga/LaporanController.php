@@ -29,12 +29,23 @@ class LaporanController extends Controller
         return view('warga.laporan.index', compact('laporanList', 'status'));
     }
 
-    public function create(): View
+    public function pilihWilayah(Request $request): View
+    {
+        $kecamatanList = $this->wilayahService->getAllKecamatan();
+        $selectedKecamatanId = $request->query('kecamatan_id');
+        $selectedKelurahanId = $request->query('kelurahan_id');
+
+        return view('warga.laporan.pilih-wilayah', compact('kecamatanList', 'selectedKecamatanId', 'selectedKelurahanId'));
+    }
+
+    public function create(Request $request): View
     {
         $kecamatanList = $this->wilayahService->getAllKecamatan();
         $kategoriList = $this->kategoriService->getAllKategori();
+        $selectedKecamatanId = $request->query('kecamatan_id');
+        $selectedKelurahanId = $request->query('kelurahan_id');
 
-        return view('warga.laporan.create', compact('kecamatanList', 'kategoriList'));
+        return view('warga.laporan.create', compact('kecamatanList', 'kategoriList', 'selectedKecamatanId', 'selectedKelurahanId'));
     }
 
     public function store(LaporanKerusakanRequest $request): RedirectResponse
@@ -67,17 +78,22 @@ class LaporanController extends Controller
 
     public function edit(LaporanKerusakan $laporan): View
     {
-        Gate::authorize('update', $laporan);
+        Gate::authorize('view', $laporan);
 
+        $isReadOnly = ! $laporan->canBeModifiedByWarga();
         $kecamatanList = $this->wilayahService->getAllKecamatan();
         $kategoriList = $this->kategoriService->getAllKategori();
 
-        return view('warga.laporan.edit', compact('laporan', 'kecamatanList', 'kategoriList'));
+        return view('warga.laporan.edit', compact('laporan', 'kecamatanList', 'kategoriList', 'isReadOnly'));
     }
 
     public function update(LaporanKerusakanRequest $request, LaporanKerusakan $laporan): RedirectResponse
     {
         Gate::authorize('update', $laporan);
+
+        if (! $laporan->canBeModifiedByWarga()) {
+            abort(403, 'Laporan kerusakan tidak dapat diubah karena status bukan menunggu verifikasi.');
+        }
 
         $this->laporanService->updateLaporan(
             $laporan,
@@ -90,12 +106,24 @@ class LaporanController extends Controller
             ->with('success', 'Perubahan laporan kerusakan berhasil disimpan.');
     }
 
-    public function destroy(LaporanKerusakan $laporan): RedirectResponse
+    public function destroy(Request $request, LaporanKerusakan $laporan): RedirectResponse
     {
         Gate::authorize('delete', $laporan);
 
+        if (! $laporan->canBeCancelledByWarga()) {
+            abort(403, 'Laporan kerusakan tidak dapat dibatalkan karena status bukan menunggu verifikasi.');
+        }
+
+        $validated = $request->validate([
+            'alasan_pembatalan' => ['required', 'string', 'min:5', 'max:500'],
+        ], [
+            'alasan_pembatalan.required' => 'Alasan pembatalan laporan wajib diisi.',
+            'alasan_pembatalan.min' => 'Alasan pembatalan minimal 5 karakter.',
+            'alasan_pembatalan.max' => 'Alasan pembatalan maksimal 500 karakter.',
+        ]);
+
         $nomorTiket = $laporan->nomor_tiket;
-        $this->laporanService->deleteLaporan($laporan);
+        $this->laporanService->cancelLaporan($laporan, $validated['alasan_pembatalan'], auth()->id());
 
         return redirect()
             ->route('warga.laporan.saya')

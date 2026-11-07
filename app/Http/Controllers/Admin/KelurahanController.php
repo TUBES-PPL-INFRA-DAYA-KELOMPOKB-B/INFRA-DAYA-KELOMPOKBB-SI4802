@@ -17,18 +17,25 @@ class KelurahanController extends Controller
     {
         $kecamatanId = $request->query('kecamatan_id') ? (int) $request->query('kecamatan_id') : null;
         $search = $request->query('search');
+        $editId = $request->query('edit_id');
+        $editingKelurahan = $editId ? $this->wilayahService->findKelurahan((int) $editId) : null;
 
         $kelurahanList = $this->wilayahService->getPaginatedKelurahan($kecamatanId, $search);
         $kecamatanList = $this->wilayahService->getAllKecamatan();
 
-        return view('admin.wilayah.kelurahan.index', compact('kelurahanList', 'kecamatanList', 'kecamatanId', 'search'));
+        return view('admin.wilayah.kelurahan.index', compact('kelurahanList', 'kecamatanList', 'kecamatanId', 'search', 'editingKelurahan'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
+        $kecamatanId = $request->query('kecamatan_id') ? (int) $request->query('kecamatan_id') : null;
+        $search = $request->query('search');
+        $editingKelurahan = null;
+
+        $kelurahanList = $this->wilayahService->getPaginatedKelurahan($kecamatanId, $search);
         $kecamatanList = $this->wilayahService->getAllKecamatan();
 
-        return view('admin.wilayah.kelurahan.create', compact('kecamatanList'));
+        return view('admin.wilayah.kelurahan.index', compact('kelurahanList', 'kecamatanList', 'kecamatanId', 'search', 'editingKelurahan'));
     }
 
     public function store(KelurahanRequest $request): RedirectResponse
@@ -40,12 +47,16 @@ class KelurahanController extends Controller
             ->with('success', 'Data kelurahan baru berhasil ditambahkan.');
     }
 
-    public function edit(int $id): View
+    public function edit(int $id, Request $request): View
     {
-        $kelurahan = $this->wilayahService->findKelurahan($id);
+        $kecamatanId = $request->query('kecamatan_id') ? (int) $request->query('kecamatan_id') : null;
+        $search = $request->query('search');
+        $editingKelurahan = $this->wilayahService->findKelurahan($id);
+
+        $kelurahanList = $this->wilayahService->getPaginatedKelurahan($kecamatanId, $search);
         $kecamatanList = $this->wilayahService->getAllKecamatan();
 
-        return view('admin.wilayah.kelurahan.edit', compact('kelurahan', 'kecamatanList'));
+        return view('admin.wilayah.kelurahan.index', compact('kelurahanList', 'kecamatanList', 'kecamatanId', 'search', 'editingKelurahan'));
     }
 
     public function update(KelurahanRequest $request, int $id): RedirectResponse
@@ -59,10 +70,16 @@ class KelurahanController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
-        $this->wilayahService->deleteKelurahan($id);
+        try {
+            $this->wilayahService->deleteKelurahan($id);
 
-        return redirect()
-            ->route('admin.kelurahan.index')
-            ->with('success', 'Data kelurahan berhasil dihapus.');
+            return redirect()
+                ->route('admin.kelurahan.index')
+                ->with('success', 'Data kelurahan berhasil dihapus.');
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('admin.kelurahan.index')
+                ->with('error', $e->getMessage());
+        }
     }
 }

@@ -7,13 +7,196 @@ use App\Models\HasilPerbaikan;
 use App\Models\RiwayatStatus;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class PetugasService
 {
+    // ==========================================
+    // PBI-17 (IFD-18): Pengelolaan Petugas Lapangan (Admin DSDABM)
+    // ==========================================
+
+    /**
+     * Mengambil daftar petugas lapangan dengan pencarian, filter status, dan paginasi (AC17-03, AC17-04).
+     */
+    public function getPaginatedPetugas(
+        ?string $search = null,
+        ?string $status = null,
+        int $perPage = 10
+    ): LengthAwarePaginator {
+        return User::query()
+            ->where('role', 'petugas')
+            ->withCount([
+                'penugasanPetugas as total_tugas',
+                'penugasanPetugas as tugas_aktif' => function ($query) {
+                    $query->where('status_penugasan', '!=', 'selesai');
+                },
+            ])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
+            ->when($status, function ($query, $status) {
+                if ($status === 'aktif') {
+                    $query->where('is_active', true);
+                } elseif ($status === 'nonaktif') {
+                    $query->where('is_active', false);
+                }
+            })
+            ->orderBy('name', 'asc')
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
+    /**
+     * Memeriksa apakah terdapat akun petugas sama sekali di database (AC17-05).
+     */
+    public function hasAnyPetugas(): bool
+    {
+        return User::where('role', 'petugas')->exists();
+    }
+
+    /**
+     * Mengambil ringkasan metrik petugas lapangan untuk kartu ringkasan.
+     */
+    public function getMetrics(): array
+    {
+        $totalPetugas = User::where('role', 'petugas')->count();
+        $totalAktif = User::where('role', 'petugas')->where('is_active', true)->count();
+        $totalNonaktif = User::where('role', 'petugas')->where('is_active', false)->count();
+
+        $totalSedangBertugas = User::where('role', 'petugas')
+            ->whereHas('penugasanPetugas', function ($q) {
+                $q->where('status_penugasan', '!=', 'selesai');
+            })
+            ->count();
+
+        return [
+            'totalPetugas' => $totalPetugas,
+            'totalAktif' => $totalAktif,
+            'totalNonaktif' => $totalNonaktif,
+            'totalSedangBertugas' => $totalSedangBertugas,
+        ];
+    }
+
+    /**
+     * Mengambil data detail petugas beserta riwayat penugasan (AC17-12, AC17-18).
+     */
+    public function findPetugas(int $id): User
+    {
+        return User::where('role', 'petugas')
+            ->with([
+                'penugasanPetugas' => function ($query) {
+                    $query->with([
+                        'laporan.kelurahan.kecamatan',
+                        'laporan.kategori',
+                        'admin',
+                    ])->orderBy('created_at', 'desc');
+                },
+            ])
+            ->findOrFail($id);
+    }
+
+    /**
+     * Menambahkan akun petugas lapangan baru (AC17-06, AC17-07, AC17-09).
+     */
+    public function createPetugas(array $data): User
+    {
+        return DB::transaction(function () use ($data) {
+            return User::create([
+                'name' => trim($data['name']),
+                'email' => strtolower(trim($data['email'])),
+                'phone' => (string) trim($data['phone']),
+                'password' => Hash::make($data['password']),
+                'role' => 'petugas',
+                'is_active' => true,
+            ]);
+        });
+    }
+
+    /**
+     * Memperbarui identitas petugas (hanya nama, email, dan telepon) (AC17-11).
+     */
+    public function updatePetugas(User $petugas, array $data): User
+    {
+        return DB::transaction(function () use ($petugas, $data) {
+            $target = User::where('id', $petugas->id)
+                ->where('role', 'petugas')
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $target->name = trim($data['name']);
+            $target->email = strtolower(trim($data['email']));
+            $target->phone = (string) trim($data['phone']);
+
+            // Password, role, dan is_active dilindungi dan tidak diubah
+            $target->save();
+
+            return $target;
+        });
+    }
+
+    /**
+     * Mengubah status aktif/nonaktif akun petugas dengan proteksi konkurensi (AC17-13, AC17-14, AC17-17, AC17-22).
+     *
+     * @return array{success: bool, message: string, status?: string, blocking_tasks?: Collection}
+     */
+    public function toggleStatus(int $id): array
+    {
+        return DB::transaction(function () use ($id) {
+            $petugas = User::where('id', $id)
+                ->where('role', 'petugas')
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($petugas->is_active) {
+                // Nonaktivasi: periksa apakah ada tugas berjalan (status != 'selesai')
+                $blockingTasks = $petugas->penugasanPetugas()
+                    ->with('laporan')
+                    ->where('status_penugasan', '!=', 'selesai')
+                    ->lockForUpdate()
+                    ->get();
+
+                if ($blockingTasks->isNotEmpty()) {
+                    return [
+                        'success' => false,
+                        'message' => 'Petugas tidak dapat dinonaktifkan karena masih memiliki tugas penugasan yang belum selesai.',
+                        'blocking_tasks' => $blockingTasks,
+                    ];
+                }
+
+                $petugas->is_active = false;
+                $petugas->save();
+
+                return [
+                    'success' => true,
+                    'message' => "Petugas {$petugas->name} berhasil dinonaktifkan.",
+                    'status' => 'nonaktif',
+                ];
+            } else {
+                // Aktivasi kembali: pulihkan status aktif dengan ID akun yang sama
+                $petugas->is_active = true;
+                $petugas->save();
+
+                return [
+                    'success' => true,
+                    'message' => "Petugas {$petugas->name} berhasil diaktifkan kembali.",
+                    'status' => 'aktif',
+                ];
+            }
+        });
+    }
+
+    // ==========================================
+    // Fitur Petugas Lapangan (Tugas Lapangan)
+    // ==========================================
+
     /**
      * Mengambil daftar tugas penugasan lapangan milik petugas tertentu secara terpaginasi.
      * Sesuai FR-19.1 - FR-19.4: filter status, pencarian, dan pengurutan default prioritas tertinggi lalu disposisi terlama.
@@ -296,33 +479,11 @@ class PetugasService
             throw new HttpException(422, 'Tugas ini sudah selesai atau tidak dapat diselesaikan kembali.');
         }
 
-        // FR-21.2: Minimal satu foto hasil perbaikan wajib ada
-        $existingPhoto = $disposisi->hasilPerbaikan?->foto_bukti_sesudah ?? $disposisi->foto_bukti_sesudah;
-        if (! $fotoSesudah && ! $existingPhoto) {
-            throw new HttpException(422, 'Wajib menyertakan minimal satu foto bukti fisik hasil perbaikan.');
-        }
-
-        // Simpan foto baru jika diunggah, atau gunakan foto yang sudah tersimpan
-        $path = $existingPhoto;
-        if ($fotoSesudah) {
-            $path = FileUploadService::storePublicFile($fotoSesudah, 'laporan/sesudah');
-        }
+        $path = FileUploadService::storePublicFile($fotoSesudah, 'laporan/sesudah');
 
         return DB::transaction(function () use ($disposisi, $petugasId, $path, $catatanPerbaikan) {
             $now = now();
 
-            // FR-21.4 & Seksi 6 PRD: Simpan / perbarui ke tabel hasil_perbaikan
-            HasilPerbaikan::updateOrCreate(
-                ['disposisi_id' => $disposisi->id],
-                [
-                    'petugas_id' => $petugasId,
-                    'foto_bukti_sesudah' => $path,
-                    'catatan_perbaikan' => $catatanPerbaikan,
-                    'tanggal_selesai' => $now->toDateString(),
-                ]
-            );
-
-            // Perbarui data disposisi (FR-21.4)
             $disposisi->update([
                 'status_penugasan' => 'selesai',
                 'foto_bukti_sesudah' => $path,
@@ -330,7 +491,6 @@ class PetugasService
                 'tanggal_selesai' => $now->toDateString(),
             ]);
 
-            // Perbarui data laporan menjadi 'selesai' (FR-21.4)
             $disposisi->laporan->update([
                 'status' => 'selesai',
                 'foto_bukti_sesudah' => $path,
@@ -341,7 +501,6 @@ class PetugasService
             $petugas = User::find($petugasId);
             $namaPetugas = $petugas ? $petugas->name : 'Petugas Lapangan';
 
-            // FR-21.5: Catat riwayat status audit dengan waktu dan pelaku
             RiwayatStatus::create([
                 'laporan_id' => $disposisi->laporan_id,
                 'user_id' => $petugasId,

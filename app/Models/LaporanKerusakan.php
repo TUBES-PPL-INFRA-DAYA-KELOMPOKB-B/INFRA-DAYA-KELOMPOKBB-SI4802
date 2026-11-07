@@ -28,6 +28,7 @@ class LaporanKerusakan extends Model
         'status',
         'prioritas',
         'alasan_penolakan',
+        'alasan_pembatalan',
         'catatan_perbaikan',
         'selesai_at',
     ];
@@ -75,6 +76,11 @@ class LaporanKerusakan extends Model
      * Cek apakah laporan masih dapat diubah atau dibatalkan oleh warga.
      */
     public function canBeModifiedByWarga(): bool
+    {
+        return $this->status === 'menunggu_verifikasi';
+    }
+
+    public function canBeCancelledByWarga(): bool
     {
         return $this->status === 'menunggu_verifikasi';
     }

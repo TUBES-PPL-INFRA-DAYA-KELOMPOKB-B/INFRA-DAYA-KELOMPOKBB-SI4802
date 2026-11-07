@@ -22,9 +22,10 @@ return new class extends Migration
             $table->decimal('latitude', 10, 8);
             $table->decimal('longitude', 11, 8);
             $table->string('foto_bukti_sebelum');
-            $table->enum('status', ['menunggu_verifikasi', 'ditolak', 'diproses', 'selesai'])->default('menunggu_verifikasi');
+            $table->enum('status', ['menunggu_verifikasi', 'ditolak', 'diproses', 'selesai', 'dibatalkan'])->default('menunggu_verifikasi');
             $table->enum('prioritas', ['rendah', 'sedang', 'tinggi'])->default('sedang');
             $table->text('alasan_penolakan')->nullable();
+            $table->text('alasan_pembatalan')->nullable();
             $table->timestamps();
 
             // Indexes sesuai spesifikasi
@@ -37,7 +38,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('laporan_id')->constrained('laporan_kerusakan')->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->enum('status', ['menunggu_verifikasi', 'ditolak', 'diproses', 'selesai']);
+            $table->enum('status', ['menunggu_verifikasi', 'ditolak', 'diproses', 'selesai', 'dibatalkan']);
             $table->text('keterangan')->nullable();
             $table->timestamp('created_at')->useCurrent();
         });

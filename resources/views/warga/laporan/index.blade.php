@@ -31,6 +31,9 @@
             <a href="{{ route('warga.laporan.saya', ['status' => 'ditolak']) }}" class="px-4 py-2 rounded-xl transition-all whitespace-nowrap {{ $status === 'ditolak' ? 'bg-[#1F3A5F] text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200' }}">
                 Ditolak
             </a>
+            <a href="{{ route('warga.laporan.saya', ['status' => 'dibatalkan']) }}" class="px-4 py-2 rounded-xl transition-all whitespace-nowrap {{ $status === 'dibatalkan' ? 'bg-[#1F3A5F] text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200' }}">
+                Dibatalkan
+            </a>
         </div>
 
         <!-- List Laporan -->
@@ -57,19 +60,23 @@
                                     {{ $laporan->nomor_tiket }}
                                 </span>
                                 @if($laporan->status === 'menunggu_verifikasi')
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                                    <span dusk="status-badge-{{ $laporan->id }}" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
                                         Menunggu Verifikasi
                                     </span>
                                 @elseif($laporan->status === 'diproses')
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
+                                    <span dusk="status-badge-{{ $laporan->id }}" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
                                         Sedang Diproses
                                     </span>
                                 @elseif($laporan->status === 'selesai')
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
+                                    <span dusk="status-badge-{{ $laporan->id }}" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
                                         Selesai
                                     </span>
+                                @elseif($laporan->status === 'dibatalkan')
+                                    <span dusk="status-badge-{{ $laporan->id }}" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700">
+                                        Dibatalkan
+                                    </span>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700">
+                                    <span dusk="status-badge-{{ $laporan->id }}" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700">
                                         Ditolak
                                     </span>
                                 @endif
