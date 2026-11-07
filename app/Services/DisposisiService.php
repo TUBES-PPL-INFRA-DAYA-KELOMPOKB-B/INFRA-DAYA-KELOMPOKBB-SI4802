@@ -80,10 +80,16 @@ class DisposisiService
     /**
      * Mengambil daftar laporan berstatus 'diproses' yang belum memiliki disposisi petugas.
      */
-    public function getLaporanSiapDisposisi(): Collection
+    public function getLaporanSiapDisposisi(?string $search = null): Collection
     {
         return LaporanKerusakan::with(['kelurahan.kecamatan', 'kategori', 'warga'])
             ->siapDisposisi()
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nomor_tiket', 'like', "%{$search}%")
+                        ->orWhere('judul', 'like', "%{$search}%");
+                });
+            })
             ->orderByRaw("CASE WHEN prioritas = 'tinggi' THEN 1 WHEN prioritas = 'sedang' THEN 2 ELSE 3 END")
             ->orderBy('created_at', 'asc')
             ->get();
@@ -104,12 +110,22 @@ class DisposisiService
         int $laporanId,
         int $adminId,
         int $petugasId,
-        string $tenggatWaktu,
+        ?string $tenggatWaktu,
         string $catatanInstruksi,
         ?string $tanggalDisposisi = null
     ): DisposisiPenugasan {
         return DB::transaction(function () use ($laporanId, $adminId, $petugasId, $tenggatWaktu, $catatanInstruksi, $tanggalDisposisi) {
-            $laporan = LaporanKerusakan::lockForUpdate()->findOrFail($laporanId);
+            // Validasi instruksi: wajib mengandung sekurangnya satu karakter nonspasi (AC16-09)
+            if (trim($catatanInstruksi) === '') {
+                throw new \InvalidArgumentException('Instruksi wajib mengandung sekurangnya satu karakter nonspasi.');
+            }
+
+            // Validasi laporan & kunci row untuk mencegah disposisi ganda (AC16-12, AC16-13)
+            $laporan = LaporanKerusakan::lockForUpdate()->find($laporanId);
+
+            if (! $laporan) {
+                throw new \InvalidArgumentException('Laporan kerusakan tidak ditemukan.');
+            }
 
             if ($laporan->status !== 'diproses') {
                 throw new \InvalidArgumentException('Hanya laporan yang telah disetujui (status diproses) yang dapat didisposisikan.');
@@ -119,14 +135,25 @@ class DisposisiService
                 throw new \InvalidArgumentException('Laporan ini sudah memiliki disposisi penugasan aktif.');
             }
 
-            $petugas = User::where('id', $petugasId)
-                ->where('role', 'petugas')
-                ->where('is_active', true)
-                ->firstOrFail();
+            // Validasi petugas & kunci row untuk integritas konkurensi dengan PBI-17 (AC16-08, Bagian 7.1)
+            $petugas = User::where('id', $petugasId)->lockForUpdate()->first();
 
-            $tanggalDisposisi = $tanggalDisposisi ?: Carbon::now()->toDateString();
+            if (! $petugas) {
+                throw new \InvalidArgumentException('Petugas yang dipilih tidak ditemukan.');
+            }
 
-            if (Carbon::parse($tenggatWaktu)->lt(Carbon::parse($tanggalDisposisi))) {
+            if (! $petugas->isPetugas()) {
+                throw new \InvalidArgumentException('Pengguna yang dipilih bukan merupakan petugas lapangan.');
+            }
+
+            if (! $petugas->is_active) {
+                throw new \InvalidArgumentException('Petugas yang dipilih sedang tidak aktif.');
+            }
+
+            // Tanggal disposisi ditetapkan server (PRD 4.4 DATETIME, AC16-11)
+            $tanggalDisposisiServer = Carbon::now();
+
+            if ($tenggatWaktu && Carbon::parse($tenggatWaktu)->lt($tanggalDisposisiServer->toDateString())) {
                 throw new \InvalidArgumentException('Tenggat waktu pelaksanaan tidak boleh lebih awal dari tanggal disposisi.');
             }
 
@@ -137,18 +164,18 @@ class DisposisiService
                 'laporan_id' => $laporan->id,
                 'admin_id' => $adminId,
                 'petugas_id' => $petugas->id,
-                'tanggal_disposisi' => $tanggalDisposisi,
-                'tenggat_waktu' => $tenggatWaktu,
+                'tanggal_disposisi' => $tanggalDisposisiServer,
+                'tenggat_waktu' => $tenggatWaktu ?: null,
                 'catatan_instruksi' => $catatanInstruksi,
                 'status_penugasan' => 'ditugaskan',
             ]);
 
-            $tenggatFormat = Carbon::parse($tenggatWaktu)->translatedFormat('d F Y');
+            $tenggatFormat = $tenggatWaktu ? ' Tenggat waktu: ' . Carbon::parse($tenggatWaktu)->translatedFormat('d F Y') . '.' : '';
             RiwayatStatus::create([
                 'laporan_id' => $laporan->id,
                 'user_id' => $adminId,
                 'status' => 'diproses',
-                'keterangan' => "Surat Perintah Tugas ({$nomorSurat}) diterbitkan untuk petugas {$petugas->name}. Tenggat waktu: {$tenggatFormat}.",
+                'keterangan' => "Surat Perintah Tugas ({$nomorSurat}) diterbitkan untuk petugas {$petugas->name}.{$tenggatFormat}",
             ]);
 
             return $disposisi;
