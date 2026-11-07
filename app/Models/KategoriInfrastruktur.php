@@ -12,9 +12,17 @@ class KategoriInfrastruktur extends Model
 
     protected $table = 'kategori_infrastruktur';
 
+    public const TINGKAT_KEPARAHAN = [
+        'rendah' => 1,
+        'sedang' => 2,
+        'tinggi' => 3,
+        'kritis' => 4,
+    ];
+
     protected $fillable = [
         'nama_kategori',
         'deskripsi',
+        'tingkat_keparahan_default',
         'bobot_prioritas',
     ];
 
@@ -23,6 +31,49 @@ class KategoriInfrastruktur extends Model
         return [
             'bobot_prioritas' => 'integer',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (KategoriInfrastruktur $kategori) {
+            if ($kategori->tingkat_keparahan_default) {
+                $kategori->bobot_prioritas = self::getBobotFromTingkat($kategori->tingkat_keparahan_default);
+            } elseif ($kategori->bobot_prioritas) {
+                $kategori->tingkat_keparahan_default = self::getTingkatFromBobot($kategori->bobot_prioritas);
+            }
+        });
+    }
+
+    public static function getBobotFromTingkat(?string $tingkat): int
+    {
+        return self::TINGKAT_KEPARAHAN[strtolower((string) $tingkat)] ?? 2;
+    }
+
+    public static function getTingkatFromBobot(?int $bobot): string
+    {
+        return match ($bobot) {
+            1 => 'rendah',
+            2 => 'sedang',
+            3 => 'tinggi',
+            4 => 'kritis',
+            default => 'sedang',
+        };
+    }
+
+    /**
+     * Label representasi teks tingkat keparahan default.
+     */
+    public function getTingkatKeparahanLabelAttribute(): string
+    {
+        $tingkat = $this->tingkat_keparahan_default ?? self::getTingkatFromBobot($this->bobot_prioritas);
+
+        return match (strtolower((string) $tingkat)) {
+            'rendah' => 'Rendah',
+            'sedang' => 'Sedang',
+            'tinggi' => 'Tinggi',
+            'kritis' => 'Kritis',
+            default => ucfirst((string) $tingkat),
+        };
     }
 
     /**
@@ -34,6 +85,7 @@ class KategoriInfrastruktur extends Model
             1 => 'Rendah',
             2 => 'Sedang',
             3 => 'Tinggi',
+            4 => 'Kritis',
             default => 'Sedang',
         };
     }

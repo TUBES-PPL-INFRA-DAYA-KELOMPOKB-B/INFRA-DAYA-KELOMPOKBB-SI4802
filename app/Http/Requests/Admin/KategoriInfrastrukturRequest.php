@@ -12,6 +12,19 @@ class KategoriInfrastrukturRequest extends FormRequest
         return auth()->check() && auth()->user()->isAdmin();
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('tingkat_keparahan_default') && ! empty($this->input('tingkat_keparahan_default'))) {
+            $this->merge([
+                'bobot_prioritas' => \App\Models\KategoriInfrastruktur::getBobotFromTingkat((string) $this->input('tingkat_keparahan_default')),
+            ]);
+        } elseif ($this->has('bobot_prioritas') && ! empty($this->input('bobot_prioritas'))) {
+            $this->merge([
+                'tingkat_keparahan_default' => \App\Models\KategoriInfrastruktur::getTingkatFromBobot((int) $this->input('bobot_prioritas')),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         $kategoriId = $this->route('kategori');
@@ -37,7 +50,12 @@ class KategoriInfrastrukturRequest extends FormRequest
                 },
             ],
             'deskripsi' => ['nullable', 'string', 'max:500'],
-            'bobot_prioritas' => ['required', 'integer', 'in:1,2,3'],
+            'tingkat_keparahan_default' => [
+                'required',
+                'string',
+                Rule::in(['rendah', 'sedang', 'tinggi', 'kritis']),
+            ],
+            'bobot_prioritas' => ['nullable', 'integer', 'in:1,2,3,4'],
         ];
     }
 
@@ -48,8 +66,10 @@ class KategoriInfrastrukturRequest extends FormRequest
             'nama_kategori.unique' => 'Nama kategori sudah digunakan.',
             'nama_kategori.max' => 'Nama kategori maksimal 100 karakter.',
             'deskripsi.max' => 'Deskripsi maksimal 500 karakter.',
+            'tingkat_keparahan_default.required' => 'Tingkat keparahan default wajib dipilih.',
+            'tingkat_keparahan_default.in' => 'Pilihan tingkat keparahan default tidak valid (rendah, sedang, tinggi, kritis).',
             'bobot_prioritas.required' => 'Bobot prioritas wajib dipilih.',
-            'bobot_prioritas.in' => 'Pilihan bobot prioritas tidak valid (1: Rendah, 2: Sedang, 3: Tinggi).',
+            'bobot_prioritas.in' => 'Pilihan bobot prioritas tidak valid (1: Rendah, 2: Sedang, 3: Tinggi, 4: Kritis).',
         ];
     }
 }

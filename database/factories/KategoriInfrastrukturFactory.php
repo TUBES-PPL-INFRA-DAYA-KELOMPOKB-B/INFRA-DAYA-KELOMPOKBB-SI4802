@@ -11,10 +11,13 @@ class KategoriInfrastrukturFactory extends Factory
 
     public function definition(): array
     {
+        $tingkat = fake()->randomElement(['rendah', 'sedang', 'tinggi', 'kritis']);
+
         return [
             'nama_kategori' => 'Kategori '.fake()->unique()->words(2, true),
             'deskripsi' => fake()->sentence(),
-            'bobot_prioritas' => fake()->numberBetween(1, 3),
+            'tingkat_keparahan_default' => $tingkat,
+            'bobot_prioritas' => KategoriInfrastruktur::getBobotFromTingkat($tingkat),
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\KategoriInfrastruktur;
 use App\Models\LaporanKerusakan;
 use App\Models\RiwayatStatus;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -58,6 +59,10 @@ class LaporanService
         return DB::transaction(function () use ($wargaId, $data, $foto) {
             $path = FileUploadService::storePublicFile($foto, 'laporan/sebelum');
 
+            // PBI-11 (KF-11.4): Nilai awal prioritas laporan diisi dengan tingkat keparahan default kategori
+            $kategori = KategoriInfrastruktur::find($data['kategori_id']);
+            $prioritasAwal = $kategori?->tingkat_keparahan_default ?? 'sedang';
+
             $laporan = LaporanKerusakan::create([
                 'nomor_tiket' => $this->generateNomorTiket(),
                 'warga_id' => $wargaId,
@@ -69,7 +74,7 @@ class LaporanService
                 'longitude' => $data['longitude'],
                 'foto_bukti_sebelum' => $path,
                 'status' => 'menunggu_verifikasi',
-                'prioritas' => 'sedang',
+                'prioritas' => $prioritasAwal,
             ]);
 
             RiwayatStatus::create([

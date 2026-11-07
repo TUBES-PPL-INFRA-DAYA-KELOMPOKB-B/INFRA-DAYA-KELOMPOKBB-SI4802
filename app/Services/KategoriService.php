@@ -40,12 +40,25 @@ class KategoriService
 
     public function createKategori(array $data): KategoriInfrastruktur
     {
+        if (isset($data['tingkat_keparahan_default'])) {
+            $data['bobot_prioritas'] = KategoriInfrastruktur::getBobotFromTingkat($data['tingkat_keparahan_default']);
+        } elseif (isset($data['bobot_prioritas']) && ! isset($data['tingkat_keparahan_default'])) {
+            $data['tingkat_keparahan_default'] = KategoriInfrastruktur::getTingkatFromBobot((int) $data['bobot_prioritas']);
+        }
+
         return KategoriInfrastruktur::create($data);
     }
 
     public function updateKategori(int $id, array $data): KategoriInfrastruktur
     {
         $kategori = KategoriInfrastruktur::findOrFail($id);
+
+        if (isset($data['tingkat_keparahan_default'])) {
+            $data['bobot_prioritas'] = KategoriInfrastruktur::getBobotFromTingkat($data['tingkat_keparahan_default']);
+        } elseif (isset($data['bobot_prioritas']) && ! isset($data['tingkat_keparahan_default'])) {
+            $data['tingkat_keparahan_default'] = KategoriInfrastruktur::getTingkatFromBobot((int) $data['bobot_prioritas']);
+        }
+
         $kategori->update($data);
 
         return $kategori;

@@ -58,7 +58,7 @@
                             <tr>
                                 <th class="px-6 py-3.5">Nama Kategori</th>
                                 <th class="px-6 py-3.5">Deskripsi Masalah</th>
-                                <th class="px-6 py-3.5">Bobot Prioritas</th>
+                                <th class="px-6 py-3.5">Tingkat Keparahan Default</th>
                                 <th class="px-6 py-3.5 text-center">Jumlah Laporan</th>
                                 <th class="px-6 py-3.5 text-right">Aksi</th>
                             </tr>
@@ -73,12 +73,20 @@
                                         {{ $kategori->deskripsi ?? '-' }}
                                     </td>
                                     <td class="px-6 py-4">
-                                        @if($kategori->bobot_prioritas === 3)
-                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                        @php
+                                            $tingkat = strtolower($kategori->tingkat_keparahan_default ?? $kategori->prioritas_label);
+                                        @endphp
+                                        @if($tingkat === 'kritis' || $kategori->bobot_prioritas === 4)
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                                                <span class="h-2 w-2 rounded-full bg-rose-600 animate-pulse"></span>
+                                                Kritis (Bobot 4)
+                                            </span>
+                                        @elseif($tingkat === 'tinggi' || $kategori->bobot_prioritas === 3)
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
                                                 <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
                                                 Tinggi (Bobot 3)
                                             </span>
-                                        @elseif($kategori->bobot_prioritas === 2)
+                                        @elseif($tingkat === 'sedang' || $kategori->bobot_prioritas === 2)
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                                                 <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
                                                 Sedang (Bobot 2)
