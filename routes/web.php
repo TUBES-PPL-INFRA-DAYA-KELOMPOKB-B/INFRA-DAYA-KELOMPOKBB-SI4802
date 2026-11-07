@@ -8,9 +8,13 @@ use App\Http\Controllers\Admin\PetugasController;
 use App\Http\Controllers\Admin\RekapController;
 use App\Http\Controllers\Admin\SuratTugasController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\UserLogController;
 use App\Http\Controllers\Admin\VerifikasiController;
 use App\Http\Controllers\Api\WilayahController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Publik\PetaPublikController;
+use App\Http\Controllers\Publik\TrackingController;
+use App\Http\Controllers\StorageFileController;
 use App\Http\Controllers\Warga\LaporanController;
 use App\Http\Controllers\Warga\UmpanBalikController;
 use Illuminate\Support\Facades\Route;
@@ -66,7 +70,9 @@ Route::middleware('auth')->group(function () {
         Route::resource('kecamatan', KecamatanController::class)->except(['show']);
         Route::resource('kelurahan', KelurahanController::class)->except(['show']);
         Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
-        Route::resource('users', UserController::class)->except(['show']);
+        Route::patch('users/{user}/role', [UserController::class, 'updateRole'])->name('users.update-role');
+        Route::get('user-logs', [UserLogController::class, 'index'])->name('user-logs.index');
+        Route::resource('users', UserController::class);
         Route::resource('kategori', KategoriController::class)->except(['show']);
 
         // PBI-17: Kelola Petugas Lapangan (IFD-18)
@@ -119,5 +125,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/rekap', fn () => redirect()->route('dashboard'))->name('rekap.index');
     });
 });
+
+// Dynamic file server for uploads (ensures uploaded images work seamlessly in serverless/Vercel)
+Route::get('/storage/{path}', [StorageFileController::class, 'show'])
+    ->where('path', '.*')
+    ->name('storage.file');
 
 require __DIR__.'/auth.php';
