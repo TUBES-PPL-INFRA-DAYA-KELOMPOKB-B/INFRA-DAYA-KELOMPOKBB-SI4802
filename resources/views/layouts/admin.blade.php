@@ -58,20 +58,8 @@
 
             <!-- Role Badge in Sidebar -->
             <div class="px-6 py-4 border-b border-white/10 bg-white/[0.02]">
-                <div class="flex items-center gap-3">
-                    <div class="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white text-sm shadow">
-                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <div class="text-xs text-slate-200 font-semibold truncate">{{ auth()->user()->name ?? 'Pengguna' }}</div>
-                        <div class="flex items-center gap-1.5 mt-0.5">
-                            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-400">
-                                {{ auth()->user()->role ?? 'Admin' }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
+                <div class="text-sm font-bold text-white tracking-tight">Admin DSDABM</div>
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">KOTA BANDUNG</div>
             </div>
 
             <!-- Nav Links in Sidebar -->
@@ -160,12 +148,16 @@
                 </a>
             </nav>
 
-            <!-- Bottom Logout in Sidebar -->
+            <!-- Bottom in Sidebar -->
+            <div class="px-6 py-4 border-t border-white/10 bg-[#070B14]">
+                <div class="text-xs font-bold text-slate-300">INFRA-DAYA</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">Infrastruktur &amp; Daya Tanggap</div>
+            </div>
             <div class="p-4 border-t border-white/10 bg-[#070B14]">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="flex w-full items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-rose-300 hover:bg-rose-500/20 hover:text-white transition-colors">
-                        <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    <button type="submit" class="flex w-full items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-300 hover:bg-rose-500/20 hover:text-white transition-colors">
+                        <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                         <span>Keluar Sistem</span>
                     </button>
                 </form>
@@ -175,19 +167,21 @@
         <!-- Main Body Area -->
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
             <!-- Top Navbar Header -->
-            <header class="h-20 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between shadow-xs sticky top-0 z-30">
+            <header class="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between shadow-xs sticky top-0 z-30">
                 <div class="flex items-center gap-3">
                     <button @click="sidebarOpen = true" class="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
                     <div>
-                        <h1 class="text-xl font-bold text-slate-900 leading-none">{{ $header ?? $title ?? 'Dashboard' }}</h1>
-                        <p class="text-xs text-slate-500 mt-1">Sistem Tanggap Kerusakan Infrastruktur Publik Kota Bandung</p>
+                        <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-none">{{ $header ?? $title ?? 'Dashboard' }}</h1>
                     </div>
                 </div>
 
                 <!-- Top Right Items -->
                 <div class="flex items-center gap-3 sm:gap-4">
+                    <span class="text-xs font-medium text-slate-600 hidden sm:inline">
+                        {{ auth()->user()->role === 'admin' ? 'Admin' : ucfirst(auth()->user()->role ?? 'User') }} &bull; {{ auth()->user()->name ?? 'Akun contoh' }}
+                    </span>
                     <div class="relative" x-data="{ open: false }" @click.outside="open = false">
                         <button @click="open = !open" class="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-2 rounded-xl hover:bg-slate-100 transition-colors">
                             <div class="h-8 w-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">

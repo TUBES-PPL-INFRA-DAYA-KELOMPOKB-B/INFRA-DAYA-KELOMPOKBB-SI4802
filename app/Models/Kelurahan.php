@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Kelurahan extends Model
 {
@@ -24,5 +25,13 @@ class Kelurahan extends Model
     public function kecamatan(): BelongsTo
     {
         return $this->belongsTo(Kecamatan::class, 'kecamatan_id');
+    }
+
+    /**
+     * Relasi ke seluruh laporan kerusakan di kelurahan ini.
+     */
+    public function laporan(): HasMany
+    {
+        return $this->hasMany(LaporanKerusakan::class, 'kelurahan_id');
     }
 }
