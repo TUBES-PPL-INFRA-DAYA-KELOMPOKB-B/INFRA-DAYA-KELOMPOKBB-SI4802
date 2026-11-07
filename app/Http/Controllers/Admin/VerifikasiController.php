@@ -19,27 +19,53 @@ class VerifikasiController extends Controller
     ) {}
 
     /**
-     * Antrean verifikasi laporan masuk.
+     * Menampilkan daftar aduan kerusakan infrastruktur dengan filter multi-kriteria (PBI-13).
      */
     public function index(Request $request): View
     {
+        $request->validate([
+            'tanggal_mulai' => 'nullable|date',
+            'tanggal_akhir' => 'nullable|date|after_or_equal:tanggal_mulai',
+        ], [
+            'tanggal_mulai.date' => 'Format rentang tanggal tidak valid.',
+            'tanggal_akhir.date' => 'Format rentang tanggal tidak valid.',
+            'tanggal_akhir.after_or_equal' => 'Tanggal awal tidak boleh lebih besar dari tanggal akhir.',
+        ]);
+
         $search = $request->query('search');
         $status = $request->query('status');
         $kategoriId = $request->query('kategori_id');
         $kecamatanId = $request->query('kecamatan_id');
+        $tanggalMulai = $request->query('tanggal_mulai');
+        $tanggalAkhir = $request->query('tanggal_akhir');
 
-        $laporanList = $this->laporanService->getPaginatedLaporanAdmin($search, $status, $kategoriId, $kecamatanId);
+        $laporanList = $this->laporanService->getPaginatedLaporanAdmin(
+            $search,
+            $status,
+            $kategoriId ? (int) $kategoriId : null,
+            $kecamatanId ? (int) $kecamatanId : null,
+            $tanggalMulai,
+            $tanggalAkhir
+        );
+
         $kategoriList = KategoriInfrastruktur::orderBy('nama_kategori')->get();
         $kecamatanList = $this->wilayahService->getAllKecamatan();
 
         return view('admin.verifikasi.index', compact(
-            'laporanList', 'kategoriList', 'kecamatanList',
-            'search', 'status', 'kategoriId', 'kecamatanId'
+            'laporanList',
+            'kategoriList',
+            'kecamatanList',
+            'search',
+            'status',
+            'kategoriId',
+            'kecamatanId',
+            'tanggalMulai',
+            'tanggalAkhir'
         ));
     }
 
     /**
-     * Halaman detail laporan & form aksi verifikasi.
+     * Menampilkan detail laporan kerusakan & bukti untuk verifikasi (PBI-14).
      */
     public function show(int $id): View
     {
@@ -49,7 +75,7 @@ class VerifikasiController extends Controller
     }
 
     /**
-     * Setujui laporan & tetapkan prioritas.
+     * Aksi terima aduan: validasi dan setujui laporan ke status diproses (PBI-14).
      */
     public function setujui(VerifikasiRequest $request, int $id): RedirectResponse
     {
@@ -58,19 +84,19 @@ class VerifikasiController extends Controller
                 $id,
                 auth()->id(),
                 $request->validated('prioritas'),
-                $request->validated('catatan_verifikator'),
+                $request->validated('catatan_verifikator')
             );
 
             return redirect()
                 ->route('admin.verifikasi.show', $id)
-                ->with('success', "Laporan {$laporan->nomor_tiket} berhasil disetujui dengan prioritas ".ucfirst($request->validated('prioritas')).'.');
+                ->with('success', "Laporan {$laporan->nomor_tiket} berhasil disetujui dan dialihkan ke status Diproses.");
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
     }
 
     /**
-     * Tolak laporan dengan alasan wajib.
+     * Aksi tolak aduan: menolak laporan dengan catatan alasan penolakan wajib (PBI-14).
      */
     public function tolak(VerifikasiRequest $request, int $id): RedirectResponse
     {
@@ -78,12 +104,32 @@ class VerifikasiController extends Controller
             $laporan = $this->laporanService->tolakLaporan(
                 $id,
                 auth()->id(),
-                $request->validated('alasan_penolakan'),
+                $request->validated('alasan_penolakan')
             );
 
             return redirect()
                 ->route('admin.verifikasi.index')
-                ->with('success', "Laporan {$laporan->nomor_tiket} berhasil ditolak dan warga akan diberitahukan.");
+                ->with('success', "Laporan {$laporan->nomor_tiket} berhasil ditolak dengan alasan yang telah dicatat.");
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Memperbarui skala prioritas penanganan laporan aktif (PBI-15).
+     */
+    public function updatePrioritas(VerifikasiRequest $request, int $id): RedirectResponse
+    {
+        try {
+            $laporan = $this->laporanService->updatePrioritasLaporan(
+                $id,
+                auth()->id(),
+                $request->validated('prioritas')
+            );
+
+            return redirect()
+                ->route('admin.verifikasi.show', $id)
+                ->with('success', "Tingkat prioritas laporan {$laporan->nomor_tiket} berhasil diperbarui menjadi " . ucfirst($laporan->prioritas) . '.');
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
