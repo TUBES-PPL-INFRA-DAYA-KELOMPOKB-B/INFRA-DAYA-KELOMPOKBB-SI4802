@@ -16,9 +16,11 @@ class KategoriController extends Controller
     public function index(Request $request): View
     {
         $search = $request->query('search');
-        $kategoriList = $this->kategoriService->getPaginatedKategori($search);
+        $keparahan = $request->query('keparahan') ?? $request->query('tingkat_keparahan');
 
-        return view('admin.kategori.index', compact('kategoriList', 'search'));
+        $kategoriList = $this->kategoriService->getPaginatedKategori($search, $keparahan);
+
+        return view('admin.kategori.index', compact('kategoriList', 'search', 'keparahan'));
     }
 
     public function create(): View

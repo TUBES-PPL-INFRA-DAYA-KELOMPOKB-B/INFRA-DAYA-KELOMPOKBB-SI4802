@@ -9,15 +9,27 @@ use Illuminate\Database\Eloquent\Collection;
 class KategoriService
 {
     /**
-     * Mengambil daftar kategori dengan pencarian dan paginasi.
+     * Mengambil daftar kategori dengan pencarian, filter tingkat keparahan, dan paginasi (PBI-12).
      */
-    public function getPaginatedKategori(?string $search = null, int $perPage = 10): LengthAwarePaginator
+    public function getPaginatedKategori(?string $search = null, ?string $keparahan = null, int $perPage = 10): LengthAwarePaginator
     {
         return KategoriInfrastruktur::query()
             ->withCount('laporan')
             ->when($search, function ($query, $search) {
-                $query->where('nama_kategori', 'like', "%{$search}%")
-                    ->orWhere('deskripsi', 'like', "%{$search}%");
+                $query->where(function ($q) use ($search) {
+                    $q->where('nama_kategori', 'like', "%{$search}%")
+                        ->orWhere('deskripsi', 'like', "%{$search}%");
+                });
+            })
+            ->when($keparahan && strtolower($keparahan) !== 'semua', function ($query) use ($keparahan) {
+                $keparahanLower = strtolower($keparahan);
+                $query->where(function ($q) use ($keparahanLower) {
+                    $q->where('tingkat_keparahan_default', $keparahanLower);
+                    $bobot = KategoriInfrastruktur::getBobotFromTingkat($keparahanLower);
+                    if ($bobot) {
+                        $q->orWhere('bobot_prioritas', $bobot);
+                    }
+                });
             })
             ->orderByDesc('bobot_prioritas')
             ->orderBy('nama_kategori')

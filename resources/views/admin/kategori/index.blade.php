@@ -14,32 +14,13 @@
             </div>
         </div>
 
-        <!-- Filter & Search Bar -->
+        <!-- Filter & Search Bar (PBI-12) -->
         <x-card class="p-4">
-            <form method="GET" action="{{ route('admin.kategori.index') }}" class="flex flex-col sm:flex-row gap-3">
-                <div class="flex-1 relative">
-                    <input
-                        type="text"
-                        name="search"
-                        value="{{ $search }}"
-                        placeholder="Cari berdasarkan nama kategori atau deskripsi..."
-                        class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent"
-                    >
-                    <svg class="h-5 w-5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                </div>
-                <div class="flex gap-2">
-                    <button type="submit" class="px-4 py-2 bg-[#1F3A5F] hover:bg-[#162a45] text-white rounded-lg text-sm font-medium transition-colors">
-                        Cari
-                    </button>
-                    @if($search)
-                        <a href="{{ route('admin.kategori.index') }}" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-medium transition-colors">
-                            Reset
-                        </a>
-                    @endif
-                </div>
-            </form>
+            <x-filter-kategori
+                :action="route('admin.kategori.index')"
+                :search="$search"
+                :keparahan="$keparahan"
+            />
         </x-card>
 
         <!-- Tabel Kategori -->
@@ -49,7 +30,15 @@
                     <svg class="h-12 w-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                     </svg>
-                    <p class="text-sm font-medium text-slate-600">Tidak ada data kategori infrastruktur.</p>
+                    <p class="text-sm font-semibold text-slate-700">Data kategori tidak ditemukan.</p>
+                    @if($search || $keparahan)
+                        <p class="text-xs text-slate-500 mt-1">Tidak ada data yang sesuai dengan kriteria pencarian atau filter yang dipilih.</p>
+                        <div class="mt-4">
+                            <a href="{{ route('admin.kategori.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+                                Reset Seluruh Filter
+                            </a>
+                        </div>
+                    @endif
                 </div>
             @else
                 <div class="overflow-x-auto">
