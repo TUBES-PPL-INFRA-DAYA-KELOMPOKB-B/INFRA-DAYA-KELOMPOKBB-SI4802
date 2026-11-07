@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\DisposisiPenugasan;
+use App\Models\HasilPerbaikan;
 use App\Models\RiwayatStatus;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -97,6 +98,7 @@ class PetugasService
             'laporan.riwayatStatus.user',
             'admin',
             'petugas',
+            'hasilPerbaikan',
         ])->findOrFail($disposisiId);
 
         if ($disposisi->petugas_id !== $petugasId) {
@@ -168,6 +170,116 @@ class PetugasService
     }
 
     /**
+     * Memperbarui progres pengerjaan, catatan perbaikan, dan/atau foto bukti perbaikan (PBI-20).
+     * Sesuai FR-20.1 - FR-20.9.
+     */
+    public function updateProgres(
+        int $disposisiId,
+        int $petugasId,
+        ?string $catatanPerbaikan = null,
+        ?UploadedFile $fotoBukti = null,
+        ?string $statusPenugasan = null
+    ): DisposisiPenugasan {
+        $disposisi = $this->getTugasDetail($disposisiId, $petugasId);
+
+        // FR-20.8: Petugas hanya dapat memperbarui progres dan mengunggah foto untuk tugas yang ditugaskan kepada dirinya dan belum ditutup/selesai.
+        if ($disposisi->isSelesai()) {
+            throw new HttpException(422, 'Tugas ini sudah selesai dan tidak dapat diperbarui lagi.');
+        }
+
+        // Tentukan status penugasan baru jika diberikan atau transisi otomatis (FR-20.1)
+        $targetStatus = $statusPenugasan ?: $disposisi->status_penugasan;
+
+        // Jika saat ini 'ditugaskan' atau 'diterima', dan petugas memperbarui progres, maka otomatis beralih ke 'sedang_dikerjakan'
+        if (in_array($disposisi->status_penugasan, ['ditugaskan', 'diterima'], true) && ! $statusPenugasan) {
+            $targetStatus = 'sedang_dikerjakan';
+        }
+
+        if ($targetStatus === 'dalam_pengerjaan') {
+            $targetStatus = 'sedang_dikerjakan';
+        }
+
+        return DB::transaction(function () use ($disposisi, $petugasId, $catatanPerbaikan, $fotoBukti, $targetStatus) {
+            $path = null;
+            if ($fotoBukti) {
+                // FR-20.3, FR-20.4, FR-20.5: Simpan foto dengan nama unik di local asset storage
+                $path = FileUploadService::storePublicFile($fotoBukti, 'laporan/sesudah');
+            }
+
+            // FR-20.5 & Bagian 6 PRD: Simpan / perbarui pada tabel hasil_perbaikan
+            $hasilData = [
+                'petugas_id' => $petugasId,
+            ];
+
+            if ($catatanPerbaikan !== null) {
+                $hasilData['catatan_perbaikan'] = $catatanPerbaikan;
+            }
+
+            if ($path !== null) {
+                $hasilData['foto_bukti_sesudah'] = $path;
+            }
+
+            HasilPerbaikan::updateOrCreate(
+                ['disposisi_id' => $disposisi->id],
+                $hasilData
+            );
+
+            $oldStatus = $disposisi->status_penugasan;
+            $statusChanged = $oldStatus !== $targetStatus;
+
+            $disposisiUpdate = [
+                'status_penugasan' => $targetStatus,
+            ];
+            if ($catatanPerbaikan !== null) {
+                $disposisiUpdate['catatan_perbaikan'] = $catatanPerbaikan;
+            }
+            if ($path !== null) {
+                $disposisiUpdate['foto_bukti_sesudah'] = $path;
+            }
+            $disposisi->update($disposisiUpdate);
+
+            // FR-20.7: Status laporan kerusakan utama otomatis tersinkronisasi menjadi 'diproses' saat penugasan dalam pengerjaan
+            $laporanUpdate = [];
+            if ($targetStatus === 'sedang_dikerjakan') {
+                $laporanUpdate['status'] = 'diproses';
+            }
+            if ($catatanPerbaikan !== null) {
+                $laporanUpdate['catatan_perbaikan'] = $catatanPerbaikan;
+            }
+            if ($path !== null) {
+                $laporanUpdate['foto_bukti_sesudah'] = $path;
+            }
+            if (! empty($laporanUpdate)) {
+                $disposisi->laporan->update($laporanUpdate);
+            }
+
+            $petugas = User::find($petugasId);
+            $namaPetugas = $petugas ? $petugas->name : 'Petugas Lapangan';
+
+            // FR-20.6: Setiap perubahan status tercatat secara otomatis pada log riwayat status
+            $keteranganLog = "Progres penanganan diperbarui oleh {$namaPetugas}.";
+            if ($statusChanged) {
+                $keteranganLog = "Status penugasan diubah menjadi [{$targetStatus}] oleh {$namaPetugas}.";
+            }
+            if ($catatanPerbaikan) {
+                $keteranganLog .= " Catatan: {$catatanPerbaikan}";
+            }
+            if ($path) {
+                $keteranganLog .= " (Foto bukti hasil perbaikan diunggah)";
+            }
+
+            RiwayatStatus::create([
+                'laporan_id' => $disposisi->laporan_id,
+                'user_id' => $petugasId,
+                'status' => 'diproses',
+                'keterangan' => $keteranganLog,
+            ]);
+
+            return $disposisi->fresh(['hasilPerbaikan', 'laporan.riwayatStatus.user']);
+        });
+    }
+
+    /**
      * Menyelesaikan tugas pengerjaan dengan unggahan foto bukti sesudah dan catatan teknis.
      */
     public function selesaikanTugas(
@@ -187,6 +299,17 @@ class PetugasService
 
         return DB::transaction(function () use ($disposisi, $petugasId, $path, $catatanPerbaikan) {
             $now = now();
+
+            // Sesuai Bagian 6 PRD: Simpan / perbarui ke tabel hasil_perbaikan
+            HasilPerbaikan::updateOrCreate(
+                ['disposisi_id' => $disposisi->id],
+                [
+                    'petugas_id' => $petugasId,
+                    'foto_bukti_sesudah' => $path,
+                    'catatan_perbaikan' => $catatanPerbaikan,
+                    'tanggal_selesai' => $now->toDateString(),
+                ]
+            );
 
             // Perbarui data disposisi
             $disposisi->update([
@@ -215,7 +338,7 @@ class PetugasService
                 'keterangan' => "Perbaikan tuntas oleh {$namaPetugas}. Catatan: {$catatanPerbaikan}",
             ]);
 
-            return $disposisi->fresh();
+            return $disposisi->fresh(['hasilPerbaikan']);
         });
     }
 

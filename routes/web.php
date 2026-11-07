@@ -84,6 +84,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/tugas/{id}', [TugasController::class, 'show'])->name('tugas.show');
         Route::post('/tugas/{id}/terima', [TugasController::class, 'acceptTask'])->name('tugas.terima');
         Route::post('/tugas/{id}/mulai', [TugasController::class, 'mulai'])->name('tugas.mulai');
+        Route::post('/tugas/{id}/progres', [TugasController::class, 'updateProgres'])->name('tugas.progres');
         Route::post('/tugas/{id}/selesai', [TugasController::class, 'selesai'])->name('tugas.selesai');
     });
 

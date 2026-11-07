@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Petugas;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Petugas\SelesaikanTugasRequest;
+use App\Http\Requests\Petugas\UpdateProgresRequest;
 use App\Services\PetugasService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -69,6 +70,24 @@ class TugasController extends Controller
         return redirect()
             ->route('petugas.tugas.show', $disposisi->id)
             ->with('success', 'Status tugas diperbarui: Penanganan fisik di lokasi telah dimulai.');
+    }
+
+    /**
+     * Memperbarui progres pekerjaan, catatan perbaikan, dan/atau foto hasil (PBI-20 / FR-20.1 - FR-20.10).
+     */
+    public function updateProgres(UpdateProgresRequest $request, int $id): RedirectResponse
+    {
+        $disposisi = $this->petugasService->updateProgres(
+            $id,
+            (int) auth()->id(),
+            $request->validated('catatan_perbaikan'),
+            $request->file('foto_bukti_sesudah'),
+            $request->validated('status_penugasan')
+        );
+
+        return redirect()
+            ->route('petugas.tugas.show', $disposisi->id)
+            ->with('success', 'Progres penanganan tugas berhasil diperbarui.');
     }
 
     /**

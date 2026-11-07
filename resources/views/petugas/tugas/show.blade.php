@@ -253,15 +253,99 @@
                     </x-card>
 
                 @elseif (in_array($disposisi->status_penugasan, ['sedang_dikerjakan', 'dalam_pengerjaan']))
-                    <!-- STATUS 3: SEDANG DIKERJAKAN -> FORM UNGGAH HASIL & SELESAI -->
+                    <!-- STATUS 3: SEDANG DIKERJAKAN -> FORM PEMBARUAN PROGRES & SELESAI (PBI-20 / FR-20.1 - FR-20.10) -->
+                    <!-- Kartu 1: Pembaruan Progres Lapangan (FR-20.1 - FR-20.5, FR-20.9, FR-20.10) -->
                     <x-card class="p-5 border-l-4 border-l-amber-500 space-y-4">
                         <div class="border-b border-slate-100 pb-3">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 mb-1">
-                                <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
-                                Pengerjaan Aktif
-                            </span>
-                            <h2 class="text-sm font-bold text-slate-900 mt-1">Lapor Penyelesaian Tugas</h2>
-                            <p class="text-xs text-slate-500">Unggah foto hasil perbaikan tuntas dan catatan teknis pelaksanaan pekerjaan.</p>
+                            <div class="flex items-center justify-between">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                                    <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                    Pengerjaan Aktif
+                                </span>
+                                @if ($disposisi->hasilPerbaikan?->foto_bukti_sesudah || $disposisi->foto_bukti_sesudah)
+                                    <span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
+                                        Foto Tersedia
+                                    </span>
+                                @endif
+                            </div>
+                            <h2 class="text-sm font-bold text-slate-900 mt-2">Pembaruan Progres & Dokumentasi</h2>
+                            <p class="text-xs text-slate-500">Perbarui catatan teknis lapangan dan foto dokumentasi hasil perbaikan bertahap.</p>
+                        </div>
+
+                        <form method="POST" action="{{ route('petugas.tugas.progres', $disposisi->id) }}" enctype="multipart/form-data" class="space-y-4">
+                            @csrf
+
+                            <!-- Foto Bukti Hasil / Progres (FR-20.3, FR-20.4, FR-20.5, FR-20.9, FR-20.10) -->
+                            <div>
+                                <label for="foto_progres" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Foto Hasil / Progres Perbaikan
+                                </label>
+
+                                @php
+                                    $fotoTersimpan = $disposisi->hasilPerbaikan?->foto_bukti_sesudah ?? $disposisi->foto_bukti_sesudah;
+                                @endphp
+
+                                @if ($fotoTersimpan)
+                                    <div class="mb-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
+                                        <img
+                                            src="{{ asset('storage/' . $fotoTersimpan) }}"
+                                            alt="Foto Progres Tersimpan"
+                                            class="h-16 w-16 object-cover rounded-lg border border-slate-200 flex-shrink-0"
+                                        >
+                                        <div class="flex-1 text-xs">
+                                            <p class="font-bold text-slate-800">Foto Dokumentasi Tersimpan</p>
+                                            <p class="text-[11px] text-slate-500">Pilih berkas baru jika ingin mengganti foto ini (FR-20.9).</p>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <input
+                                    type="file"
+                                    id="foto_progres"
+                                    name="foto_bukti_sesudah"
+                                    accept="image/jpeg,image/png,image/jpg"
+                                    capture="environment"
+                                    dusk="input-foto-progres"
+                                    class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0E7C86] file:text-white hover:file:bg-[#0b636b] file:cursor-pointer border border-slate-300 rounded-xl bg-slate-50 cursor-pointer"
+                                >
+                                <p class="text-[11px] text-slate-400 mt-1">Format: JPG, JPEG, PNG. Maksimal 5 MB. Mendukung kamera langsung smartphone (FR-20.10).</p>
+                            </div>
+
+                            <!-- Catatan Progres Perbaikan (FR-20.2) -->
+                            <div>
+                                <label for="catatan_progres" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Catatan Progres Perbaikan
+                                </label>
+                                <textarea
+                                    id="catatan_progres"
+                                    name="catatan_perbaikan"
+                                    dusk="input-catatan-progres"
+                                    rows="3"
+                                    placeholder="Catat tahapan atau kendala teknis penanganan saat ini..."
+                                    class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                >{{ old('catatan_perbaikan', $disposisi->hasilPerbaikan?->catatan_perbaikan ?? $disposisi->catatan_perbaikan) }}</textarea>
+                            </div>
+
+                            <!-- Tombol Simpan Progres -->
+                            <button
+                                type="submit"
+                                dusk="btn-submit-progres"
+                                class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm transition"
+                            >
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                <span>Perbarui Progres Pengerjaan</span>
+                            </button>
+                        </form>
+                    </x-card>
+
+                    <!-- Kartu 2: Pelaporan Penyelesaian Tugas Final -->
+                    <x-card class="p-5 border-l-4 border-l-emerald-500 space-y-4">
+                        <div class="border-b border-slate-100 pb-3">
+                            <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <svg class="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Lapor Penyelesaian Tugas</span>
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-1">Unggah foto hasil perbaikan tuntas dan catatan teknis pelaksanaan pekerjaan.</p>
                         </div>
 
                         <form method="POST" action="{{ route('petugas.tugas.selesai', $disposisi->id) }}" enctype="multipart/form-data" class="space-y-4">
@@ -277,11 +361,12 @@
                                     id="foto_bukti_sesudah"
                                     name="foto_bukti_sesudah"
                                     accept="image/jpeg,image/png,image/jpg"
+                                    capture="environment"
                                     required
                                     dusk="input-foto-sesudah"
                                     class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0E7C86] file:text-white hover:file:bg-[#0b636b] file:cursor-pointer border border-slate-300 rounded-xl bg-slate-50 cursor-pointer"
                                 >
-                                <p class="text-[11px] text-slate-400 mt-1">Format: JPG, JPEG, PNG. Maksimal 5 MB.</p>
+                                <p class="text-[11px] text-slate-400 mt-1">Format: JPG, JPEG, PNG. Maksimal 5 MB (FR-20.3, FR-20.4, FR-20.10).</p>
                                 @error('foto_bukti_sesudah')
                                     <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
                                 @enderror
@@ -300,7 +385,7 @@
                                     required
                                     placeholder="Contoh: Telah dilakukan pembersihan lumpur saluran drainase sepanjang 15 meter dan penambalan dinding semen yang jebol. Aliran air kembali lancar."
                                     class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                                >{{ old('catatan_perbaikan') }}</textarea>
+                                >{{ old('catatan_perbaikan', $disposisi->hasilPerbaikan?->catatan_perbaikan ?? $disposisi->catatan_perbaikan) }}</textarea>
                                 <p class="text-[11px] text-slate-400 mt-1">Minimal 10 karakter.</p>
                                 @error('catatan_perbaikan')
                                     <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
@@ -320,7 +405,7 @@
                     </x-card>
 
                 @elseif ($disposisi->status_penugasan === 'selesai')
-                    <!-- STATUS 4: SELESAI -> RINGKASAN BEFORE / AFTER -->
+                    <!-- STATUS 4: SELESAI -> RINGKASAN BEFORE / AFTER (FR-20.8: Petugas tidak dapat lagi memperbarui) -->
                     <x-card class="p-5 border-l-4 border-l-emerald-500 space-y-4">
                         <div class="flex items-center gap-3">
                             <div class="h-10 w-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
@@ -335,14 +420,19 @@
                         </div>
 
                         <!-- Foto Sesudah -->
-                        @if ($disposisi->foto_bukti_sesudah)
+                        @php
+                            $fotoAkhir = $disposisi->hasilPerbaikan?->foto_bukti_sesudah ?? $disposisi->foto_bukti_sesudah;
+                            $catatanAkhir = $disposisi->hasilPerbaikan?->catatan_perbaikan ?? $disposisi->catatan_perbaikan ?? $disposisi->laporan->catatan_perbaikan;
+                        @endphp
+
+                        @if ($fotoAkhir)
                             <div>
                                 <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                                     Foto Bukti Hasil Perbaikan (Sesudah)
                                 </p>
                                 <div class="rounded-xl overflow-hidden border border-emerald-200 bg-slate-50 max-h-48">
                                     <img
-                                        src="{{ asset('storage/' . $disposisi->foto_bukti_sesudah) }}"
+                                        src="{{ asset('storage/' . $fotoAkhir) }}"
                                         alt="Foto Bukti Sesudah"
                                         class="w-full h-auto object-cover max-h-48"
                                     >
@@ -353,7 +443,7 @@
                         <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
                             <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Catatan Perbaikan Anda</p>
                             <p class="text-xs text-slate-700 italic">
-                                "{{ $disposisi->catatan_perbaikan ?? $disposisi->laporan->catatan_perbaikan }}"
+                                "{{ $catatanAkhir }}"
                             </p>
                         </div>
                     </x-card>

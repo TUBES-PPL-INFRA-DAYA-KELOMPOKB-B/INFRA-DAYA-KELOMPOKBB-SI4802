@@ -50,6 +50,11 @@ class DisposisiPenugasan extends Model
         return $this->belongsTo(User::class, 'petugas_id');
     }
 
+    public function hasilPerbaikan(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(HasilPerbaikan::class, 'disposisi_id');
+    }
+
     public function isDitugaskan(): bool
     {
         return $this->status_penugasan === 'ditugaskan';

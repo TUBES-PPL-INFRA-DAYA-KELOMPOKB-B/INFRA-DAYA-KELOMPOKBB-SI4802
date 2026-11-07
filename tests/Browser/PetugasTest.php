@@ -172,6 +172,29 @@ class PetugasTest extends DuskTestCase
     }
 
     /**
+     * PBI-20: Petugas dapat memperbarui catatan progres dan mengunggah/mengganti foto hasil (FR-20.1 - FR-20.10).
+     */
+    public function test_petugas_can_update_progress_and_upload_interim_photo(): void
+    {
+        $data = $this->createData();
+
+        $this->browse(function (Browser $browser) use ($data) {
+            $browser->loginAs($data['petugas'])
+                ->visit(route('petugas.tugas.show', $data['disposisi']->id))
+                ->press('@btn-mulai-pengerjaan')
+                ->waitForText('Pembaruan Progres & Dokumentasi')
+                ->assertSee('Pembaruan Progres & Dokumentasi')
+                ->type('@input-catatan-progres', 'Sedang dilakukan pengerukan sedimentasi lumpur pada gorong-gorong tahap 1.')
+                ->attach('@input-foto-progres', __DIR__.'/fixtures/sample_kerusakan.jpg')
+                ->press('@btn-submit-progres')
+                ->waitForText('Progres penanganan tugas berhasil diperbarui.')
+                ->assertSee('Progres penanganan tugas berhasil diperbarui.')
+                ->assertSee('Foto Dokumentasi Tersimpan')
+                ->assertSee('Sedang dilakukan pengerukan sedimentasi lumpur');
+        });
+    }
+
+    /**
      * Pengguna selain petugas dilarang mengakses modul tugas lapangan.
      */
     public function test_non_petugas_cannot_access_petugas_tugas(): void
