@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Kelurahan;
 use App\Models\LaporanKerusakan;
 use App\Models\RiwayatStatus;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -59,15 +60,24 @@ class LaporanService
             $filename = Str::random(40).'.'.$foto->getClientOriginalExtension();
             $path = $foto->storeAs('laporan/sebelum', $filename, 'public');
 
+            $kelurahanId = $data['kelurahan_id'] ?? Kelurahan::value('id');
+            $latitude = (float) ($data['latitude'] ?? -6.91746400);
+            $longitude = (float) ($data['longitude'] ?? 107.61912300);
+
+            $deskripsi = $data['deskripsi_kondisi'];
+            if (! empty($data['patokan_lokasi']) && ! str_contains($deskripsi, $data['patokan_lokasi'])) {
+                $deskripsi .= "\n[Patokan Lokasi: ".trim($data['patokan_lokasi']).']';
+            }
+
             $laporan = LaporanKerusakan::create([
                 'nomor_tiket' => $this->generateNomorTiket(),
                 'warga_id' => $wargaId,
-                'kelurahan_id' => $data['kelurahan_id'],
+                'kelurahan_id' => $kelurahanId,
                 'kategori_id' => $data['kategori_id'],
                 'judul' => $data['judul'],
-                'deskripsi_kondisi' => $data['deskripsi_kondisi'],
-                'latitude' => $data['latitude'],
-                'longitude' => $data['longitude'],
+                'deskripsi_kondisi' => $deskripsi,
+                'latitude' => $latitude,
+                'longitude' => $longitude,
                 'foto_bukti_sebelum' => $path,
                 'status' => 'menunggu_verifikasi',
                 'prioritas' => 'sedang',
@@ -86,6 +96,10 @@ class LaporanService
 
     public function updateLaporan(LaporanKerusakan $laporan, array $data, ?UploadedFile $foto = null): LaporanKerusakan
     {
+        if (! $laporan->canBeModifiedByWarga()) {
+            throw new \DomainException('Laporan kerusakan tidak dapat diubah karena status bukan menunggu verifikasi.');
+        }
+
         return DB::transaction(function () use ($laporan, $data, $foto) {
             if ($foto) {
                 if ($laporan->foto_bukti_sebelum) {
@@ -95,13 +109,18 @@ class LaporanService
                 $data['foto_bukti_sebelum'] = $foto->storeAs('laporan/sebelum', $filename, 'public');
             }
 
+            $deskripsi = $data['deskripsi_kondisi'];
+            if (! empty($data['patokan_lokasi']) && ! str_contains($deskripsi, $data['patokan_lokasi'])) {
+                $deskripsi .= "\n[Patokan Lokasi: ".trim($data['patokan_lokasi']).']';
+            }
+
             $laporan->update([
-                'kelurahan_id' => $data['kelurahan_id'],
+                'kelurahan_id' => $data['kelurahan_id'] ?? $laporan->kelurahan_id,
                 'kategori_id' => $data['kategori_id'],
                 'judul' => $data['judul'],
-                'deskripsi_kondisi' => $data['deskripsi_kondisi'],
-                'latitude' => $data['latitude'],
-                'longitude' => $data['longitude'],
+                'deskripsi_kondisi' => $deskripsi,
+                'latitude' => (float) $data['latitude'],
+                'longitude' => (float) $data['longitude'],
                 'foto_bukti_sebelum' => $data['foto_bukti_sebelum'] ?? $laporan->foto_bukti_sebelum,
             ]);
 
@@ -116,15 +135,41 @@ class LaporanService
         });
     }
 
-    public function deleteLaporan(LaporanKerusakan $laporan): bool
+    /**
+     * Membatalkan pengajuan laporan oleh pelapor (PBI-9).
+     */
+    public function cancelLaporan(LaporanKerusakan $laporan, string $alasanPembatalan, ?int $userId = null): LaporanKerusakan
     {
-        return DB::transaction(function () use ($laporan) {
+        if (! $laporan->canBeCancelledByWarga()) {
+            throw new \DomainException('Laporan kerusakan tidak dapat dibatalkan karena status bukan menunggu verifikasi.');
+        }
+
+        return DB::transaction(function () use ($laporan, $alasanPembatalan, $userId) {
             if ($laporan->foto_bukti_sebelum) {
                 Storage::disk('public')->delete($laporan->foto_bukti_sebelum);
             }
 
-            return $laporan->delete();
+            $laporan->update([
+                'status' => 'dibatalkan',
+                'alasan_pembatalan' => trim($alasanPembatalan),
+            ]);
+
+            RiwayatStatus::create([
+                'laporan_id' => $laporan->id,
+                'user_id' => $userId ?? $laporan->warga_id,
+                'status' => 'dibatalkan',
+                'keterangan' => 'Laporan dibatalkan oleh pelapor. Alasan: '.trim($alasanPembatalan),
+            ]);
+
+            return $laporan;
         });
+    }
+
+    public function deleteLaporan(LaporanKerusakan $laporan, ?string $alasan = null, ?int $userId = null): bool
+    {
+        $this->cancelLaporan($laporan, $alasan ?? 'Dibatalkan oleh pelapor.', $userId);
+
+        return true;
     }
 
     /**

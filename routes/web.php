@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\VerifikasiController;
 use App\Http\Controllers\Api\WilayahController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Warga\LaporanController;
+use App\Http\Controllers\Warga\UmpanBalikController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -56,6 +57,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/laporan/{laporan}/edit', [LaporanController::class, 'edit'])->name('laporan.edit');
         Route::put('/laporan/{laporan}', [LaporanController::class, 'update'])->name('laporan.update');
         Route::delete('/laporan/{laporan}', [LaporanController::class, 'destroy'])->name('laporan.destroy');
+        Route::post('/laporan/{laporan}/batal', [LaporanController::class, 'destroy'])->name('laporan.batal');
+        Route::post('/laporan/{laporan}/umpan-balik', [UmpanBalikController::class, 'store'])->name('laporan.umpan-balik');
     });
 
     // Route Admin DSDABM
