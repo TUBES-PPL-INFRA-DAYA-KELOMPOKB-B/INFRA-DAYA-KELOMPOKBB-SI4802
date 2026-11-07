@@ -1,129 +1,201 @@
-<x-admin-layout title="Master Data Kecamatan" header="Kelola Data Kecamatan">
-    <div class="space-y-6">
-        <!-- Top Tab Bar -->
-        <div class="flex items-center gap-3 border-b border-slate-200 pb-3">
-            <a href="{{ route('admin.kecamatan.index') }}" class="inline-flex items-center gap-2 rounded-xl bg-brand-navy px-4 py-2 text-sm font-bold text-white shadow-sm">
-                <span>Data Kecamatan</span>
-            </a>
-            <a href="{{ route('admin.kelurahan.index') }}" class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-brand-navy transition-colors border border-slate-200">
-                <span>Data Kelurahan</span>
-            </a>
+<x-admin-layout title="Kelola Data Kecamatan" header="Kelola data kecamatan">
+    <div class="space-y-4">
+        <!-- Top Title & Subtitle Section -->
+        <div>
+            <div class="text-xs font-bold text-blue-600 tracking-wider uppercase mb-1">
+                SPRINT 1 / PBI 01 / ADMIN
+            </div>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">
+                Kelola data kecamatan
+            </h1>
+            <p class="text-sm text-slate-500 mt-1">
+                Data wilayah administratif Kota Bandung.
+            </p>
         </div>
 
-        <!-- Filter & Action Card -->
-        <x-card>
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <!-- Search Form -->
-                <form action="{{ route('admin.kecamatan.index') }}" method="GET" class="flex items-center gap-2 max-w-md w-full">
-                    <div class="relative flex-1">
-                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        </div>
+        <!-- Two Columns Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mt-4">
+            <!-- Left Card: Daftar kecamatan (lg:col-span-7) -->
+            <div class="lg:col-span-7 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-5">
+                <h2 class="text-base font-bold text-slate-900">Daftar kecamatan</h2>
+
+                <!-- Cari kecamatan form -->
+                <form action="{{ route('admin.kecamatan.index') }}" method="GET" class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-slate-700">Cari kecamatan</label>
+                    <div class="flex items-center gap-2">
                         <input
                             type="text"
                             name="search"
                             value="{{ $search }}"
-                            placeholder="Cari nama atau kode kecamatan..."
-                            class="w-full rounded-xl border border-slate-300 pl-10 pr-4 py-2 text-sm text-slate-800 placeholder-slate-400 focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20"
+                            placeholder="Ketik nama atau kode"
+                            class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
                         >
+                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors">
+                            Cari
+                        </button>
+                        @if ($search)
+                            <a href="{{ route('admin.kecamatan.index') }}" class="text-xs text-slate-500 hover:text-rose-600 underline">Reset</a>
+                        @endif
                     </div>
-                    <x-button variant="secondary" size="md" type="submit">
-                        Cari
-                    </x-button>
-                    @if ($search)
-                        <a href="{{ route('admin.kecamatan.index') }}" class="text-xs text-slate-500 hover:text-rose-600 underline">Reset</a>
-                    @endif
                 </form>
 
-                <!-- Add Button -->
-                <x-button variant="amber" :href="route('admin.kecamatan.create')">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    <span>Tambah Kecamatan</span>
-                </x-button>
-            </div>
-        </x-card>
-
-        <!-- Table Card -->
-        <x-card>
-            @if ($kecamatanList->isEmpty())
-                <x-empty-state
-                    title="Tidak Ada Data Kecamatan"
-                    description="{{ $search ? 'Tidak ditemukan kecamatan dengan kata kunci pencarian Anda.' : 'Belum ada data kecamatan yang tersimpan.' }}"
-                    action-text="Tambah Kecamatan Baru"
-                    :action-url="route('admin.kecamatan.create')"
-                />
-            @else
-                <div class="overflow-x-auto">
+                <!-- Table -->
+                <div class="overflow-x-auto border-t border-slate-100 pt-2">
                     <table class="w-full text-left text-sm text-slate-700">
-                        <thead class="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                        <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200/80">
                             <tr>
-                                <th class="px-4 py-3.5 w-12 text-center">#</th>
-                                <th class="px-4 py-3.5">Kode Kecamatan</th>
-                                <th class="px-4 py-3.5">Nama Kecamatan</th>
-                                <th class="px-4 py-3.5 text-center">Kelurahan</th>
-                                <th class="px-4 py-3.5 text-right">Aksi</th>
+                                <th class="px-3.5 py-2.5">KODE</th>
+                                <th class="px-3.5 py-2.5">KECAMATAN</th>
+                                <th class="px-3.5 py-2.5 text-center">KELURAHAN</th>
+                                <th class="px-3.5 py-2.5 text-right">AKSI</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
-                            @foreach ($kecamatanList as $index => $kecamatan)
-                                <tr class="hover:bg-slate-50/70 transition-colors">
-                                    <td class="px-4 py-3.5 text-center font-semibold text-slate-400">
-                                        {{ $kecamatanList->firstItem() + $index }}
-                                    </td>
-                                    <td class="px-4 py-3.5 font-mono text-xs font-bold text-brand-navy">
+                            @forelse ($kecamatanList as $kecamatan)
+                                <tr class="hover:bg-slate-50/70 transition-colors {{ (isset($editingKecamatan) && $editingKecamatan?->id === $kecamatan->id) ? 'bg-blue-50/50' : '' }}">
+                                    <td class="px-3.5 py-3 font-mono text-xs font-semibold text-slate-700">
                                         {{ $kecamatan->kode_kecamatan }}
                                     </td>
-                                    <td class="px-4 py-3.5 font-semibold text-slate-900">
+                                    <td class="px-3.5 py-3 font-semibold text-slate-900">
                                         {{ $kecamatan->nama_kecamatan }}
                                     </td>
-                                    <td class="px-4 py-3.5 text-center">
-                                        <a href="{{ route('admin.kelurahan.index', ['kecamatan_id' => $kecamatan->id]) }}" class="inline-flex items-center gap-1 rounded-full bg-brand-bg px-2.5 py-1 text-xs font-semibold text-brand-teal hover:bg-brand-teal hover:text-white transition-colors">
-                                            <span>{{ $kecamatan->kelurahan_count }}</span>
-                                            <span>Kelurahan &rarr;</span>
-                                        </a>
+                                    <td class="px-3.5 py-3 text-center text-sm font-medium text-slate-600">
+                                        {{ $kecamatan->kelurahan_count ?? $kecamatan->kelurahan()->count() }}
                                     </td>
-                                    <td class="px-4 py-3.5 text-right">
-                                        <div class="flex items-center justify-end gap-2">
-                                            <a href="{{ route('admin.kecamatan.edit', $kecamatan->id) }}" class="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-brand-navy" title="Ubah">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    <td class="px-3.5 py-3 text-right">
+                                        <div class="inline-flex items-center gap-2">
+                                            <a href="{{ route('admin.kecamatan.index', ['edit_id' => $kecamatan->id, 'search' => $search]) }}" class="text-xs font-semibold text-slate-800 hover:text-blue-600 transition-colors">
+                                                Ubah / Hapus
                                             </a>
-                                            <!-- Delete Button triggers modal -->
-                                            <button
-                                                type="button"
-                                                @click="$dispatch('open-modal', 'delete-kecamatan-{{ $kecamatan->id }}')"
-                                                class="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-                                                title="Hapus"
-                                            >
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                            </button>
+                                            <!-- Form tersembunyi untuk Dusk test & programatik delete -->
+                                            <form id="delete-form-{{ $kecamatan->id }}" method="POST" action="{{ route('admin.kecamatan.destroy', $kecamatan->id) }}" class="hidden">
+                                                @csrf
+                                                @method('DELETE')
+                                            </form>
                                         </div>
-
-                                        <!-- Modal Konfirmasi Hapus -->
-                                        <x-modal-confirm
-                                            id="delete-kecamatan-{{ $kecamatan->id }}"
-                                            title="Hapus Kecamatan {{ $kecamatan->nama_kecamatan }}"
-                                            message="{{ $kecamatan->kelurahan_count > 0 ? 'Peringatan: Kecamatan ' . $kecamatan->nama_kecamatan . ' masih memiliki ' . $kecamatan->kelurahan_count . ' kelurahan. Penghapusan akan ditolak sistem sebelum seluruh kelurahan dihapus/dipindahkan.' : 'Apakah Anda yakin ingin menghapus data Kecamatan ' . $kecamatan->nama_kecamatan . ' (' . $kecamatan->kode_kecamatan . ')?' }}"
-                                            confirm-text="Ya, Hapus Sekarang"
-                                            confirm-variant="danger"
-                                            method="DELETE"
-                                            :action="route('admin.kecamatan.destroy', $kecamatan->id)"
-                                        />
-                                        {{-- Form tersembunyi untuk Dusk test --}}
-                                        <form id="delete-form-{{ $kecamatan->id }}" method="POST" action="{{ route('admin.kecamatan.destroy', $kecamatan->id) }}" class="hidden">
-                                            @csrf
-                                            @method('DELETE')
-                                        </form>
                                     </td>
                                 </tr>
-                            @endforeach
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="px-3.5 py-6 text-center text-xs text-slate-400">
+                                        Tidak ada data kecamatan ditemukan.
+                                    </td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
 
-                <div class="mt-6 border-t border-slate-100 pt-4">
-                    {{ $kecamatanList->links() }}
+                <!-- Add Button under Table -->
+                <div class="pt-2 flex items-center justify-between">
+                    <a href="{{ route('admin.kecamatan.index') }}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors">
+                        <span>+ Tambah kecamatan</span>
+                    </a>
+
+                    @if ($kecamatanList->hasPages())
+                        <div class="text-xs">
+                            {{ $kecamatanList->links() }}
+                        </div>
+                    @endif
                 </div>
-            @endif
-        </x-card>
+            </div>
+
+            <!-- Right Card: Tambah / ubah kecamatan (lg:col-span-5) -->
+            <div class="lg:col-span-5 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+                <h2 class="text-base font-bold text-slate-900">Tambah / ubah kecamatan</h2>
+
+                <form
+                    action="{{ $editingKecamatan ? route('admin.kecamatan.update', $editingKecamatan->id) : route('admin.kecamatan.store') }}"
+                    method="POST"
+                    class="space-y-4"
+                >
+                    @csrf
+                    @if ($editingKecamatan)
+                        @method('PUT')
+                    @endif
+
+                    <div class="space-y-1">
+                        <label for="kode_kecamatan" class="block text-xs font-semibold text-slate-700">
+                            Kode kecamatan *
+                        </label>
+                        <input
+                            type="text"
+                            id="kode_kecamatan"
+                            name="kode_kecamatan"
+                            value="{{ old('kode_kecamatan', $editingKecamatan?->kode_kecamatan ?? '') }}"
+                            placeholder="32.73.03"
+                            maxlength="10"
+                            required
+                            class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 @error('kode_kecamatan') border-rose-400 @enderror"
+                        >
+                        @error('kode_kecamatan')
+                            <p class="text-[11px] font-medium text-rose-600 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="space-y-1">
+                        <label for="nama_kecamatan" class="block text-xs font-semibold text-slate-700">
+                            Nama kecamatan *
+                        </label>
+                        <input
+                            type="text"
+                            id="nama_kecamatan"
+                            name="nama_kecamatan"
+                            value="{{ old('nama_kecamatan', $editingKecamatan?->nama_kecamatan ?? '') }}"
+                            placeholder="Antapani"
+                            maxlength="100"
+                            required
+                            class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 @error('nama_kecamatan') border-rose-400 @enderror"
+                        >
+                        @error('nama_kecamatan')
+                            <p class="text-[11px] font-medium text-rose-600 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="pt-2">
+                        <button
+                            type="submit"
+                            dusk="submit-btn"
+                            class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-xs transition-colors"
+                        >
+                            Simpan kecamatan
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Warning box & Delete Action (Shown when editing or available) -->
+                @if ($editingKecamatan)
+                    <div class="pt-4 border-t border-slate-100 space-y-3">
+                        <div class="rounded-xl bg-rose-50 border border-rose-100 p-3.5 text-xs text-rose-700 font-medium leading-relaxed">
+                            Hapus kecamatan? Data yang masih memiliki kelurahan atau laporan tidak dapat dihapus.
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <a
+                                href="{{ route('admin.kecamatan.index') }}"
+                                class="px-5 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition-colors"
+                            >
+                                Batal
+                            </a>
+                            <form action="{{ route('admin.kecamatan.destroy', $editingKecamatan->id) }}" method="POST">
+                                @csrf
+                                @method('DELETE')
+                                <button
+                                    type="submit"
+                                    class="px-6 py-2 bg-red-700 hover:bg-red-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+                                >
+                                    Hapus
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-xs text-slate-400 pt-4">
+            Data contoh • Mockup desain, bukan data operasional
+        </div>
     </div>
 </x-admin-layout>
