@@ -53,6 +53,7 @@ class UserRoleTest extends DuskTestCase
             // 2. Target user login dengan akunnya
             $browser->loginAs($targetUser->fresh())
                 ->visit(route('dashboard'))
+                ->waitForText('Dashboard Eksekutif')
                 ->assertSee('Dashboard Eksekutif')
                 ->assertSee('Role: PIMPINAN');
 

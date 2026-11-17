@@ -30,6 +30,7 @@ class LaporanKerusakan extends Model
         'alasan_penolakan',
         'catatan_perbaikan',
         'selesai_at',
+        'created_at',
     ];
 
     protected function casts(): array
@@ -49,6 +50,18 @@ class LaporanKerusakan extends Model
     public function kelurahan(): BelongsTo
     {
         return $this->belongsTo(Kelurahan::class, 'kelurahan_id');
+    }
+
+    public function kecamatan(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Kecamatan::class,
+            Kelurahan::class,
+            'id',
+            'id',
+            'kelurahan_id',
+            'kecamatan_id'
+        );
     }
 
     public function kategori(): BelongsTo

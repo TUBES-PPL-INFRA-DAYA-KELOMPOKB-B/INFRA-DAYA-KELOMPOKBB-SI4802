@@ -352,8 +352,15 @@
                 maxZoom: 19
             }).addTo(map);
 
+            const popupContent = document.createElement('div');
+            const b = document.createElement('b');
+            b.textContent = @js($laporan->nomor_tiket);
+            popupContent.appendChild(b);
+            popupContent.appendChild(document.createElement('br'));
+            popupContent.appendChild(document.createTextNode(@js($laporan->judul)));
+
             L.marker([lat, lng]).addTo(map)
-                .bindPopup('<b>{{ $laporan->nomor_tiket }}</b><br>{{ $laporan->judul }}')
+                .bindPopup(popupContent)
                 .openPopup();
         });
     </script>

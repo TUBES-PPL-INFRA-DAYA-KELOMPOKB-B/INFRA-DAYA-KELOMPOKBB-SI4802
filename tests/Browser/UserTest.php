@@ -177,6 +177,7 @@ class UserTest extends DuskTestCase
             $browser->visit(route('admin.users.index'))
                 ->type('@search-input', $uniqueKeyword)
                 ->click('@search-btn')
+                ->waitForText($userKhusus->name)
                 ->assertSee($userKhusus->name)
                 ->assertDontSee($userLain->name);
 

@@ -56,8 +56,7 @@ class LaporanService
     public function createLaporan(int $wargaId, array $data, UploadedFile $foto): LaporanKerusakan
     {
         return DB::transaction(function () use ($wargaId, $data, $foto) {
-            $filename = Str::random(40).'.'.$foto->getClientOriginalExtension();
-            $path = $foto->storeAs('laporan/sebelum', $filename, 'public');
+            $path = FileUploadService::storePublicFile($foto, 'laporan/sebelum');
 
             $laporan = LaporanKerusakan::create([
                 'nomor_tiket' => $this->generateNomorTiket(),
@@ -89,10 +88,9 @@ class LaporanService
         return DB::transaction(function () use ($laporan, $data, $foto) {
             if ($foto) {
                 if ($laporan->foto_bukti_sebelum) {
-                    Storage::disk('public')->delete($laporan->foto_bukti_sebelum);
+                    FileUploadService::deletePublicFile($laporan->foto_bukti_sebelum);
                 }
-                $filename = Str::random(40).'.'.$foto->getClientOriginalExtension();
-                $data['foto_bukti_sebelum'] = $foto->storeAs('laporan/sebelum', $filename, 'public');
+                $data['foto_bukti_sebelum'] = FileUploadService::storePublicFile($foto, 'laporan/sebelum');
             }
 
             $laporan->update([
@@ -120,7 +118,7 @@ class LaporanService
     {
         return DB::transaction(function () use ($laporan) {
             if ($laporan->foto_bukti_sebelum) {
-                Storage::disk('public')->delete($laporan->foto_bukti_sebelum);
+                FileUploadService::deletePublicFile($laporan->foto_bukti_sebelum);
             }
 
             return $laporan->delete();

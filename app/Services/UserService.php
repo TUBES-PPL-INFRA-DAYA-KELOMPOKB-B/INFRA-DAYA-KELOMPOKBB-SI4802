@@ -206,7 +206,7 @@ class UserService
             $user = User::findOrFail($id);
 
             if ($user->hasRelatedData()) {
-                throw new \DomainException('Pengguna tidak dapat dihapus karena memiliki riwayat laporan atau penugasan terkait.');
+                throw new \DomainException('Pengguna tidak dapat dihapus karena memiliki riwayat transaksi laporan atau penugasan terkait dan hanya dapat dinonaktifkan.');
             }
 
             $userData = $user->only(['name', 'email', 'role']);

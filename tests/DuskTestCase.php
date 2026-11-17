@@ -60,4 +60,33 @@ abstract class DuskTestCase extends BaseTestCase
             )
         );
     }
+
+    /**
+     * Create a new Browser instance with Slow Motion support.
+     *
+     * @param  \Facebook\WebDriver\Remote\RemoteWebDriver  $driver
+     * @return \Laravel\Dusk\Browser
+     */
+    protected function newBrowser($driver)
+    {
+        return new \Tests\Support\SlowBrowser($driver);
+    }
+
+    /**
+     * Browse with graceful end pause so the user can see the final state.
+     *
+     * @param  \Closure  $callback
+     * @return void
+     */
+    public function browse(\Closure $callback)
+    {
+        parent::browse(function (...$browsers) use ($callback) {
+            $callback(...$browsers);
+
+            $endPause = (int) env('DUSK_END_PAUSE', 1500);
+            if ($endPause > 0 && isset($browsers[0])) {
+                $browsers[0]->pause($endPause);
+            }
+        });
+    }
 }
