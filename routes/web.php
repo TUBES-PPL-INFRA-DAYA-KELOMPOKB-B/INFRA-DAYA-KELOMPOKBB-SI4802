@@ -30,13 +30,10 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::get('/peta-publik', function () {
-    return view('welcome');
-})->name('peta.publik');
+Route::get('/peta-publik', [PetaPublikController::class, 'index'])->name('peta.publik');
+Route::get('/api/peta-publik/markers', [PetaPublikController::class, 'markers'])->name('api.peta.markers');
 
-Route::get('/lacak-tiket', function () {
-    return view('welcome');
-})->name('tracking.publik');
+Route::get('/lacak-tiket/{nomor_tiket?}', [TrackingController::class, 'index'])->name('tracking.publik');
 
 // Dashboard Utama Terotentikasi
 Route::get('/dashboard', function () {
