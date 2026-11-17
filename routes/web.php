@@ -55,11 +55,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Route Warga
-    Route::middleware('role:warga,admin')->prefix('warga')->name('warga.')->group(function () {
+    Route::middleware('role:warga')->prefix('warga')->name('warga.')->group(function () {
         Route::get('/pilih-wilayah', [LaporanController::class, 'pilihWilayah'])->name('laporan.pilih-wilayah');
         Route::get('/laporan-saya', [LaporanController::class, 'index'])->name('laporan.saya');
         Route::get('/lapor', [LaporanController::class, 'create'])->name('laporan.create');
-        Route::post('/lapor', [LaporanController::class, 'store'])->name('laporan.store');
+        Route::post('/lapor', [LaporanController::class, 'store'])
+            ->middleware('throttle:10,1')
+            ->name('laporan.store');
         Route::get('/laporan/{laporan}', [LaporanController::class, 'show'])->name('laporan.show');
         Route::get('/laporan/{laporan}/edit', [LaporanController::class, 'edit'])->name('laporan.edit');
         Route::put('/laporan/{laporan}', [LaporanController::class, 'update'])->name('laporan.update');
