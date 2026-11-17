@@ -12,10 +12,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        require_once __DIR__ . '/LaporanPbi13Seeder.php';
+
         $this->call([
             WilayahSeeder::class,
             UserSeeder::class,
             KategoriInfrastrukturSeeder::class,
+            LaporanPbi13Seeder::class,
         ]);
     }
 }

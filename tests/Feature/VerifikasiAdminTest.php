@@ -77,8 +77,10 @@ class VerifikasiAdminTest extends TestCase
             'foto_bukti_sebelum' => 'laporan/sebelum/test1.jpg',
             'status' => 'menunggu_verifikasi',
             'prioritas' => 'sedang',
-            'created_at' => Carbon::now()->subDays(2),
         ]);
+        $this->lap1->timestamps = false;
+        $this->lap1->created_at = Carbon::now()->subDays(2);
+        $this->lap1->save();
 
         // LAP2: Drainase, Gedebage, Diproses
         $this->lap2 = LaporanKerusakan::create([
@@ -93,8 +95,10 @@ class VerifikasiAdminTest extends TestCase
             'foto_bukti_sebelum' => 'laporan/sebelum/test2.jpg',
             'status' => 'diproses',
             'prioritas' => 'tinggi',
-            'created_at' => Carbon::now()->subDays(5),
         ]);
+        $this->lap2->timestamps = false;
+        $this->lap2->created_at = Carbon::now()->subDays(5);
+        $this->lap2->save();
     }
 
     // =========================================================================

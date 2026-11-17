@@ -121,9 +121,9 @@
                         class="text-xs rounded-xl border-slate-300 focus:ring-2 focus:ring-blue-600 py-2 px-3 bg-slate-50 font-semibold text-slate-700"
                     >
                         <option value="" {{ empty($days) ? 'selected' : '' }}>Semua Data Historis</option>
-                        <option value="30" {{ $days === 30 ? 'selected' : '' }}>30 Hari Terakhir</option>
-                        <option value="90" {{ $days === 90 ? 'selected' : '' }}>90 Hari Terakhir</option>
-                        <option value="365" {{ $days === 365 ? 'selected' : '' }}>1 Tahun Terakhir</option>
+                        <option value="30" {{ ($days ?? null) === 30 ? 'selected' : '' }}>30 Hari Terakhir</option>
+                        <option value="90" {{ ($days ?? null) === 90 ? 'selected' : '' }}>90 Hari Terakhir</option>
+                        <option value="365" {{ ($days ?? null) === 365 ? 'selected' : '' }}>1 Tahun Terakhir</option>
                     </select>
                 </form>
             </div>
