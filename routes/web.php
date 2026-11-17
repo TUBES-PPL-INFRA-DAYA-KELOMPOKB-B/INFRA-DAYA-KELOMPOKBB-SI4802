@@ -6,11 +6,15 @@ use App\Http\Controllers\Admin\KecamatanController;
 use App\Http\Controllers\Admin\KelurahanController;
 use App\Http\Controllers\Admin\PetugasController;
 use App\Http\Controllers\Admin\RekapController;
-use App\Http\Controllers\Admin\SuratTugasController;
+// use App\Http\Controllers\Admin\SuratTugasController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserLogController;
 use App\Http\Controllers\Admin\VerifikasiController;
 use App\Http\Controllers\Api\WilayahController;
+<<<<<<< Updated upstream
+=======
+use App\Http\Controllers\DashboardController;
+>>>>>>> Stashed changes
 use App\Http\Controllers\Petugas\TugasController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Publik\PetaPublikController;
@@ -37,6 +41,7 @@ Route::get('/api/peta-publik/markers', [PetaPublikController::class, 'markers'])
 Route::get('/lacak-tiket/{nomor_tiket?}', [TrackingController::class, 'index'])->name('tracking.publik');
 
 // Dashboard Utama Terotentikasi
+<<<<<<< Updated upstream
 Route::get('/dashboard', function () {
     if (auth()->user()?->isPetugas()) {
         return redirect()->route('petugas.tugas.index');
@@ -44,6 +49,11 @@ Route::get('/dashboard', function () {
 
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+=======
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+>>>>>>> Stashed changes
 
 // API Endpoint Publik / Web
 Route::get('/api/wilayah/kecamatan/{id}/kelurahan', [WilayahController::class, 'kelurahanByKecamatan'])->name('api.wilayah.kelurahan');
@@ -106,11 +116,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/disposisi/{id}', [DisposisiController::class, 'show'])->name('disposisi.show');
         Route::get('/disposisi/{id}/pdf', [DisposisiController::class, 'cetakPdf'])->name('disposisi.pdf');
 
-        // PBI-18: Pencetakan Surat Tugas (IFD-17)
-        Route::get('/surat-tugas', [SuratTugasController::class, 'index'])->name('surat-tugas.index');
-        Route::get('/surat-tugas/{id}', [SuratTugasController::class, 'show'])->name('surat-tugas.show');
-        Route::get('/surat-tugas/{id}/pdf', [SuratTugasController::class, 'pdf'])->name('surat-tugas.pdf');
-        Route::get('/surat-tugas/{id}/cetak', [SuratTugasController::class, 'cetak'])->name('surat-tugas.cetak');
+        // PBI-18: Pencetakan Surat Tugas (IFD-17) - Pending controller
+        // Route::get('/surat-tugas', [SuratTugasController::class, 'index'])->name('surat-tugas.index');
+        // Route::get('/surat-tugas/{id}', [SuratTugasController::class, 'show'])->name('surat-tugas.show');
+        // Route::get('/surat-tugas/{id}/pdf', [SuratTugasController::class, 'pdf'])->name('surat-tugas.pdf');
+        // Route::get('/surat-tugas/{id}/cetak', [SuratTugasController::class, 'cetak'])->name('surat-tugas.cetak');
 
         // Fase 11: Rekapitulasi Data & Ekspor
         Route::get('/rekap', [RekapController::class, 'index'])->name('rekap.index');
@@ -122,18 +132,26 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:petugas')->prefix('petugas')->name('petugas.')->group(function () {
         Route::get('/tugas', [TugasController::class, 'index'])->name('tugas.index');
         Route::get('/tugas/{id}', [TugasController::class, 'show'])->name('tugas.show');
+<<<<<<< Updated upstream
         Route::post('/tugas/{id}/terima', [TugasController::class, 'acceptTask'])->name('tugas.terima');
         Route::post('/tugas/{id}/mulai', [TugasController::class, 'mulai'])->name('tugas.mulai');
         Route::post('/tugas/{id}/progres', [TugasController::class, 'updateProgres'])->name('tugas.progres');
         Route::post('/tugas/{id}/selesai', [TugasController::class, 'selesai'])->name('tugas.selesai');
         Route::post('/tugas/{id}/complete', [TugasController::class, 'completeTask'])->name('tugas.complete');
+=======
+        Route::post('/tugas/{id}/mulai', [TugasController::class, 'mulai'])->name('tugas.mulai');
+        Route::post('/tugas/{id}/selesai', [TugasController::class, 'selesai'])->name('tugas.selesai');
+>>>>>>> Stashed changes
     });
 
     // Route Pimpinan Eksekutif
-    Route::middleware('role:pimpinan')->prefix('pimpinan')->name('pimpinan.')->group(function () {
-        Route::get('/sla', fn () => redirect()->route('dashboard'))->name('sla.index');
-        Route::get('/peta', fn () => redirect()->route('dashboard'))->name('peta.index');
-        Route::get('/rekap', fn () => redirect()->route('dashboard'))->name('rekap.index');
+    Route::middleware('role:pimpinan,admin')->prefix('pimpinan')->name('pimpinan.')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/sla', [DashboardController::class, 'index'])->name('sla.index');
+        Route::get('/peta', [PetaPublikController::class, 'index'])->name('peta.index');
+        Route::get('/rekap', [RekapController::class, 'index'])->name('rekap.index');
+        Route::get('/rekap/excel', [RekapController::class, 'exportExcel'])->name('rekap.excel');
+        Route::get('/rekap/pdf', [RekapController::class, 'exportPdf'])->name('rekap.pdf');
     });
 });
 

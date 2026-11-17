@@ -22,7 +22,11 @@ class LaporanWargaTest extends DuskTestCase
     {
         $kecamatan = Kecamatan::factory()->create([
             'nama_kecamatan' => 'Coblong',
+<<<<<<< Updated upstream
             'kode_kecamatan' => '32.73.06',
+=======
+            'kode_kecamatan' => '32.73.08',
+>>>>>>> Stashed changes
         ]);
 
         $kelurahan = Kelurahan::factory()->create([
