@@ -106,7 +106,9 @@
                             >
                                 <option value="">Pilih Kecamatan Kota Bandung</option>
                                 @foreach($kecamatanList as $kec)
-                                    <option value="{{ $kec->id }}">{{ $kec->nama_kecamatan }}</option>
+                                    <option value="{{ $kec->id }}" {{ (old('kecamatan_id', $selectedKecamatanId ?? '') == $kec->id) ? 'selected' : '' }}>
+                                        {{ $kec->nama_kecamatan }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -292,6 +294,7 @@
             // Chained Dropdown Wilayah (PBI-3 Listener tanpa mengubah logika dependensi)
             const kecSelect = document.getElementById('kecamatan_select');
             const kelSelect = document.getElementById('kelurahan_id');
+            const initialKelurahanId = '{{ old('kelurahan_id', $selectedKelurahanId ?? '') }}';
 
             if (kecSelect && kelSelect) {
                 kecSelect.addEventListener('change', function() {

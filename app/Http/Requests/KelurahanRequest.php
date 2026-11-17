@@ -24,7 +24,7 @@ class KelurahanRequest extends FormRequest
             'kode_kelurahan' => [
                 'required',
                 'string',
-                'max:20',
+                'max:10',
                 Rule::unique('kelurahan', 'kode_kelurahan')->ignore($kelurahanId),
             ],
             'nama_kelurahan' => [
@@ -42,7 +42,7 @@ class KelurahanRequest extends FormRequest
             'kecamatan_id.exists' => 'Kecamatan yang dipilih tidak valid.',
             'kode_kelurahan.required' => 'Kode kelurahan wajib diisi.',
             'kode_kelurahan.unique' => 'Kode kelurahan tersebut sudah terdaftar.',
-            'kode_kelurahan.max' => 'Kode kelurahan maksimal 20 karakter.',
+            'kode_kelurahan.max' => 'Kode kelurahan maksimal 10 karakter.',
             'nama_kelurahan.required' => 'Nama kelurahan wajib diisi.',
             'nama_kelurahan.max' => 'Nama kelurahan maksimal 100 karakter.',
         ];

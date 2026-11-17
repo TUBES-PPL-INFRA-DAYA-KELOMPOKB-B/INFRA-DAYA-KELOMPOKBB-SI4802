@@ -20,7 +20,7 @@ class KecamatanRequest extends FormRequest
             'kode_kecamatan' => [
                 'required',
                 'string',
-                'max:20',
+                'max:10',
                 Rule::unique('kecamatan', 'kode_kecamatan')->ignore($kecamatanId),
             ],
             'nama_kecamatan' => [
@@ -36,7 +36,7 @@ class KecamatanRequest extends FormRequest
         return [
             'kode_kecamatan.required' => 'Kode kecamatan wajib diisi.',
             'kode_kecamatan.unique' => 'Kode kecamatan tersebut sudah terdaftar.',
-            'kode_kecamatan.max' => 'Kode kecamatan maksimal 20 karakter.',
+            'kode_kecamatan.max' => 'Kode kecamatan maksimal 10 karakter.',
             'nama_kecamatan.required' => 'Nama kecamatan wajib diisi.',
             'nama_kecamatan.max' => 'Nama kecamatan maksimal 100 karakter.',
         ];

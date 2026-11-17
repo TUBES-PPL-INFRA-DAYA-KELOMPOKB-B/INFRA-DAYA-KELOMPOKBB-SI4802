@@ -19,7 +19,7 @@ class EnsureUserRole
             return redirect()->route('login');
         }
 
-        if (! $request->user()->is_active) {
+        if (! $request->user()->fresh()?->is_active) {
             auth()->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

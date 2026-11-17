@@ -22,6 +22,7 @@
                         type="text"
                         name="search"
                         value="{{ $search }}"
+                        dusk="search-input"
                         placeholder="Cari berdasarkan nama, email, atau no. telepon..."
                         class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent"
                     >
@@ -32,6 +33,7 @@
                 <div class="w-full sm:w-48">
                     <select
                         name="role"
+                        dusk="role-select"
                         onchange="this.form.submit()"
                         class="w-full py-2 px-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#0E7C86] focus:border-transparent text-slate-700"
                     >
@@ -43,7 +45,7 @@
                     </select>
                 </div>
                 <div class="flex gap-2">
-                    <button type="submit" class="px-4 py-2 bg-[#1F3A5F] hover:bg-[#162a45] text-white rounded-lg text-sm font-medium transition-colors">
+                    <button type="submit" dusk="search-btn" class="px-4 py-2 bg-[#1F3A5F] hover:bg-[#162a45] text-white rounded-lg text-sm font-medium transition-colors">
                         Cari
                     </button>
                     @if($search || $role)
@@ -74,6 +76,7 @@
                                 <th class="px-6 py-3.5">Peran</th>
                                 <th class="px-6 py-3.5">Kontak</th>
                                 <th class="px-6 py-3.5">Status Akun</th>
+                                <th class="px-6 py-3.5">Tanggal Dibuat</th>
                                 <th class="px-6 py-3.5 text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -115,6 +118,7 @@
                                             @method('PATCH')
                                             <button
                                                 type="submit"
+                                                dusk="toggle-active-btn-{{ $user->id }}"
                                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors {{ $user->is_active ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 hover:bg-rose-100' }}"
                                                 title="Klik untuk mengubah status aktif"
                                             >
@@ -123,8 +127,14 @@
                                             </button>
                                         </form>
                                     </td>
+                                    <td class="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">
+                                        {{ $user->created_at ? $user->created_at->format('d M Y') : '-' }}
+                                    </td>
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex items-center justify-end gap-2">
+                                            <a href="{{ route('admin.users.show', $user->id) }}" class="p-1.5 text-slate-400 hover:text-[#1F3A5F] rounded-lg hover:bg-slate-100 transition-colors" title="Lihat Detail" dusk="show-btn-{{ $user->id }}">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                            </a>
                                             <a href="{{ route('admin.users.edit', $user->id) }}" class="p-1.5 text-slate-400 hover:text-[#0E7C86] rounded-lg hover:bg-slate-100 transition-colors" title="Ubah Data">
                                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                             </a>
@@ -134,6 +144,7 @@
                                                     onclick="confirmDelete('{{ route('admin.users.destroy', $user->id) }}', '{{ $user->name }}')"
                                                     class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 transition-colors"
                                                     title="Hapus Akun"
+                                                    dusk="delete-btn-{{ $user->id }}"
                                                 >
                                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                                 </button>
@@ -172,7 +183,7 @@
                     <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors">
                         Batal
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium transition-colors">
+                    <button type="submit" dusk="confirm-delete-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium transition-colors">
                         Ya, Hapus
                     </button>
                 </div>

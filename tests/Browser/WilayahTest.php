@@ -39,7 +39,7 @@ class WilayahTest extends DuskTestCase
     {
         // Buat 1 record agar tabel dirender (bukan empty-state)
         Kecamatan::factory()->create([
-            'kode_kecamatan' => 'KEC-VIEW-01',
+            'kode_kecamatan' => 'KC-VIEW-01',
             'nama_kecamatan' => 'Kecamatan Tampil',
         ]);
 
@@ -62,7 +62,7 @@ class WilayahTest extends DuskTestCase
             $this->loginAsAdmin($browser);
 
             $browser->visit(route('admin.kecamatan.create'))
-                ->type('kode_kecamatan', 'KEC-TEST-01')
+                ->type('kode_kecamatan', 'KC-TEST-01')
                 ->type('nama_kecamatan', 'Kecamatan Uji Coba')
                 ->click('@submit-btn')
                 ->waitForLocation('/admin/kecamatan')
@@ -91,7 +91,7 @@ class WilayahTest extends DuskTestCase
     public function test_admin_can_edit_kecamatan(): void
     {
         $kecamatan = Kecamatan::factory()->create([
-            'kode_kecamatan' => 'KEC-EDIT-01',
+            'kode_kecamatan' => 'KC-EDIT-01',
             'nama_kecamatan' => 'Kecamatan Edit Lama',
         ]);
 
@@ -134,6 +134,38 @@ class WilayahTest extends DuskTestCase
     }
 
     /**
+     * Pencegahan hapus: Kecamatan yang masih memiliki kelurahan ditolak penghapusannya (FR-01-04).
+     */
+    public function test_admin_cannot_delete_kecamatan_with_kelurahan(): void
+    {
+        $kecamatan = Kecamatan::factory()->create([
+            'kode_kecamatan' => 'KC-NODEL',
+            'nama_kecamatan' => 'Kecamatan Ada Kelurahan',
+        ]);
+        Kelurahan::factory()->create([
+            'kecamatan_id' => $kecamatan->id,
+            'kode_kelurahan' => 'KL-NODEL',
+            'nama_kelurahan' => 'Kelurahan Anak',
+        ]);
+
+        $this->browse(function (Browser $browser) use ($kecamatan) {
+            $this->loginAsAdmin($browser);
+
+            $browser->visit(route('admin.kecamatan.index'))
+                ->assertSee('Kecamatan Ada Kelurahan');
+
+            // Submit form hapus
+            $browser->script(
+                "document.getElementById('delete-form-{$kecamatan->id}').submit();"
+            );
+
+            $browser->assertPathIs('/admin/kecamatan')
+                ->assertSee('tidak dapat dihapus')
+                ->assertSee('Kecamatan Ada Kelurahan');
+        });
+    }
+
+    /**
      * Fitur pencarian kecamatan berfungsi.
      */
     public function test_kecamatan_search_works(): void
@@ -164,12 +196,12 @@ class WilayahTest extends DuskTestCase
     {
         // Buat 1 record agar tabel dirender (bukan empty-state)
         $kec = Kecamatan::factory()->create([
-            'kode_kecamatan' => 'KEC-VKEL-01',
+            'kode_kecamatan' => 'KC-VKEL-01',
             'nama_kecamatan' => 'Kecamatan Lihat',
         ]);
         Kelurahan::factory()->create([
             'kecamatan_id' => $kec->id,
-            'kode_kelurahan' => 'KEL-VIEW-01',
+            'kode_kelurahan' => 'KL-VIEW-01',
             'nama_kelurahan' => 'Kelurahan Tampil',
         ]);
 
@@ -198,7 +230,7 @@ class WilayahTest extends DuskTestCase
 
             $browser->visit(route('admin.kelurahan.create'))
                 ->select('kecamatan_id', $kecamatan->id)
-                ->type('kode_kelurahan', 'KEL-TEST-01')
+                ->type('kode_kelurahan', 'KL-TEST-01')
                 ->type('nama_kelurahan', 'Kelurahan Uji Coba')
                 ->click('@submit-btn')
                 ->waitForLocation('/admin/kelurahan')
@@ -212,12 +244,12 @@ class WilayahTest extends DuskTestCase
     public function test_admin_can_edit_kelurahan(): void
     {
         $kecamatan = Kecamatan::factory()->create([
-            'kode_kecamatan' => 'KEC-EKEL-01',
+            'kode_kecamatan' => 'KC-EKEL-01',
             'nama_kecamatan' => 'Kecamatan Edit Kelurahan',
         ]);
         $kelurahan = Kelurahan::factory()->create([
             'kecamatan_id' => $kecamatan->id,
-            'kode_kelurahan' => 'KEL-EDIT-01',
+            'kode_kelurahan' => 'KL-EDIT-01',
             'nama_kelurahan' => 'Kelurahan Lama',
         ]);
 

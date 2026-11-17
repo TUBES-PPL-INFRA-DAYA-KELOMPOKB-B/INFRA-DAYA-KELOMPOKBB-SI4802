@@ -16,14 +16,20 @@ class KecamatanController extends Controller
     public function index(Request $request): View
     {
         $search = $request->query('search');
+        $editId = $request->query('edit_id');
+        $editingKecamatan = $editId ? $this->wilayahService->findKecamatan((int) $editId) : null;
         $kecamatanList = $this->wilayahService->getPaginatedKecamatan($search);
 
-        return view('admin.wilayah.kecamatan.index', compact('kecamatanList', 'search'));
+        return view('admin.wilayah.kecamatan.index', compact('kecamatanList', 'search', 'editingKecamatan'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('admin.wilayah.kecamatan.create');
+        $search = $request->query('search');
+        $editingKecamatan = null;
+        $kecamatanList = $this->wilayahService->getPaginatedKecamatan($search);
+
+        return view('admin.wilayah.kecamatan.index', compact('kecamatanList', 'search', 'editingKecamatan'));
     }
 
     public function store(KecamatanRequest $request): RedirectResponse
@@ -35,11 +41,13 @@ class KecamatanController extends Controller
             ->with('success', 'Data kecamatan baru berhasil ditambahkan.');
     }
 
-    public function edit(int $id): View
+    public function edit(int $id, Request $request): View
     {
-        $kecamatan = $this->wilayahService->findKecamatan($id);
+        $search = $request->query('search');
+        $editingKecamatan = $this->wilayahService->findKecamatan($id);
+        $kecamatanList = $this->wilayahService->getPaginatedKecamatan($search);
 
-        return view('admin.wilayah.kecamatan.edit', compact('kecamatan'));
+        return view('admin.wilayah.kecamatan.index', compact('kecamatanList', 'search', 'editingKecamatan'));
     }
 
     public function update(KecamatanRequest $request, int $id): RedirectResponse
@@ -53,10 +61,16 @@ class KecamatanController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
-        $this->wilayahService->deleteKecamatan($id);
+        try {
+            $this->wilayahService->deleteKecamatan($id);
 
-        return redirect()
-            ->route('admin.kecamatan.index')
-            ->with('success', 'Kecamatan beserta seluruh kelurahan terkait berhasil dihapus.');
+            return redirect()
+                ->route('admin.kecamatan.index')
+                ->with('success', 'Data kecamatan berhasil dihapus.');
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('admin.kecamatan.index')
+                ->with('error', $e->getMessage());
+        }
     }
 }

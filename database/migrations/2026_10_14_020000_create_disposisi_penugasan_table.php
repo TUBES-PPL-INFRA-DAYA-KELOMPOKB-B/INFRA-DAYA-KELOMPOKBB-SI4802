@@ -17,8 +17,8 @@ return new class extends Migration
             $table->foreignId('laporan_id')->unique()->constrained('laporan_kerusakan')->cascadeOnDelete();
             $table->foreignId('admin_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('petugas_id')->constrained('users')->cascadeOnDelete();
-            $table->date('tanggal_disposisi');
-            $table->date('tenggat_waktu');
+            $table->dateTime('tanggal_disposisi');
+            $table->date('tenggat_waktu')->nullable();
             $table->text('catatan_instruksi');
             $table->enum('status_penugasan', ['ditugaskan', 'sedang_dikerjakan', 'selesai'])->default('ditugaskan');
             $table->timestamps();

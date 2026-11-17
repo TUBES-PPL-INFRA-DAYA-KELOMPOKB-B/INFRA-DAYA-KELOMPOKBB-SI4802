@@ -61,6 +61,17 @@ class UserSeeder extends Seeder
 
         // 3 Warga Kota Bandung
         User::firstOrCreate(
+            ['email' => 'warga@bandung.go.id'],
+            [
+                'name' => 'Warga Pelapor',
+                'phone' => '085612340000',
+                'role' => 'warga',
+                'is_active' => true,
+                'password' => $password,
+            ]
+        );
+
+        User::firstOrCreate(
             ['email' => 'kelompok9@gmail.com'],
             [
                 'name' => 'Kelompok 9 Admin',

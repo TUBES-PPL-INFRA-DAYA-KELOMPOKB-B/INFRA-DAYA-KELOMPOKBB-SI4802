@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             WilayahSeeder::class,
             UserSeeder::class,
             KategoriInfrastrukturSeeder::class,
+            PetugasTugasSeeder::class,
         ]);
     }
 }

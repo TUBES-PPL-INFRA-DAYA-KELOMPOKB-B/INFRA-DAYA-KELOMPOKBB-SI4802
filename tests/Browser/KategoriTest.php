@@ -56,7 +56,7 @@ class KategoriTest extends DuskTestCase
 
             $browser->visit(route('admin.kategori.create'))
                 ->type('nama_kategori', 'Jembatan Penyeberangan Orang (JPO)')
-                ->select('bobot_prioritas', '2')
+                ->select('tingkat_keparahan_default', 'sedang')
                 ->type('deskripsi', 'Kerusakan lantai plat JPO atau atap bocor')
                 ->click('@submit-btn')
                 ->waitForLocation('/admin/kategori')
@@ -95,7 +95,7 @@ class KategoriTest extends DuskTestCase
             $browser->visit(route('admin.kategori.edit', $kategori->id))
                 ->clear('nama_kategori')
                 ->type('nama_kategori', 'Kategori Setelah Edit')
-                ->select('bobot_prioritas', '3')
+                ->select('tingkat_keparahan_default', 'tinggi')
                 ->click('@submit-btn')
                 ->waitForLocation('/admin/kategori')
                 ->assertSee('berhasil diperbarui')

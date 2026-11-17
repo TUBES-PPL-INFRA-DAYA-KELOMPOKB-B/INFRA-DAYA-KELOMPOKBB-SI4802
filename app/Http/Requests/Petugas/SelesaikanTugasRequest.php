@@ -15,12 +15,21 @@ class SelesaikanTugasRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Get the validation rules that apply to the request (FR-21.2).
+     * Minimal satu foto hasil perbaikan wajib ada (baik dari berkas yang diunggah saat ini atau yang sudah tersimpan sebelumnya).
      */
     public function rules(): array
     {
+        $disposisiId = $this->route('id');
+        $hasExistingPhoto = false;
+
+        if ($disposisiId) {
+            $disposisi = \App\Models\DisposisiPenugasan::with('hasilPerbaikan')->find($disposisiId);
+            $hasExistingPhoto = ! empty($disposisi?->hasilPerbaikan?->foto_bukti_sesudah) || ! empty($disposisi?->foto_bukti_sesudah);
+        }
+
         return [
-            'foto_bukti_sesudah' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:5120'],
+            'foto_bukti_sesudah' => [$hasExistingPhoto ? 'nullable' : 'required', 'image', 'mimes:jpeg,png,jpg', 'max:5120'],
             'catatan_perbaikan' => ['required', 'string', 'min:10', 'max:2000'],
         ];
     }

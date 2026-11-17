@@ -58,20 +58,8 @@
 
             <!-- Role Badge in Sidebar -->
             <div class="px-6 py-4 border-b border-white/10 bg-white/[0.02]">
-                <div class="flex items-center gap-3">
-                    <div class="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white text-sm shadow">
-                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <div class="text-xs text-slate-200 font-semibold truncate">{{ auth()->user()->name ?? 'Pengguna' }}</div>
-                        <div class="flex items-center gap-1.5 mt-0.5">
-                            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-400">
-                                {{ auth()->user()->role ?? 'Admin' }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
+                <div class="text-sm font-bold text-white tracking-tight">Admin DSDABM</div>
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">KOTA BANDUNG</div>
             </div>
 
             <!-- Nav Links in Sidebar -->
@@ -97,6 +85,10 @@
                         <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                         <span>Manajemen Pengguna</span>
                     </a>
+                    <a href="{{ route('admin.user-logs.index', [], false) }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all {{ request()->routeIs('admin.user-logs.*') ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-600/30' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
+                        <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span>Log Aktivitas Akun</span>
+                    </a>
                     <a href="{{ route('admin.kategori.index', [], false) }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all {{ request()->routeIs('admin.kategori.*') ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-600/30' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                         <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                         <span>Kategori Kerusakan</span>
@@ -112,6 +104,10 @@
                     <a href="{{ route('admin.disposisi.index', [], false) }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all {{ request()->routeIs('admin.disposisi.*') ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-600/30' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                         <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         <span>Disposisi Petugas</span>
+                    </a>
+                    <a href="{{ route('admin.petugas.index', [], false) }}" dusk="nav-petugas" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all {{ request()->routeIs('admin.petugas.*') ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-600/30' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
+                        <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        <span>Petugas Lapangan</span>
                     </a>
                     <a href="{{ route('admin.rekap.index', [], false) }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all {{ request()->routeIs('admin.rekap.*') ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-600/30' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                         <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -152,12 +148,16 @@
                 </a>
             </nav>
 
-            <!-- Bottom Logout in Sidebar -->
+            <!-- Bottom in Sidebar -->
+            <div class="px-6 py-4 border-t border-white/10 bg-[#070B14]">
+                <div class="text-xs font-bold text-slate-300">INFRA-DAYA</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">Infrastruktur &amp; Daya Tanggap</div>
+            </div>
             <div class="p-4 border-t border-white/10 bg-[#070B14]">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="flex w-full items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-rose-300 hover:bg-rose-500/20 hover:text-white transition-colors">
-                        <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    <button type="submit" class="flex w-full items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-300 hover:bg-rose-500/20 hover:text-white transition-colors">
+                        <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                         <span>Keluar Sistem</span>
                     </button>
                 </form>
@@ -167,19 +167,21 @@
         <!-- Main Body Area -->
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
             <!-- Top Navbar Header -->
-            <header class="h-20 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between shadow-xs sticky top-0 z-30">
+            <header class="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between shadow-xs sticky top-0 z-30">
                 <div class="flex items-center gap-3">
                     <button @click="sidebarOpen = true" class="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
                     <div>
-                        <h1 class="text-xl font-bold text-slate-900 leading-none">{{ $header ?? $title ?? 'Dashboard' }}</h1>
-                        <p class="text-xs text-slate-500 mt-1">Sistem Tanggap Kerusakan Infrastruktur Publik Kota Bandung</p>
+                        <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-none">{{ $header ?? $title ?? 'Dashboard' }}</h1>
                     </div>
                 </div>
 
                 <!-- Top Right Items -->
                 <div class="flex items-center gap-3 sm:gap-4">
+                    <span class="text-xs font-medium text-slate-600 hidden sm:inline">
+                        {{ auth()->user()->role === 'admin' ? 'Admin' : ucfirst(auth()->user()->role ?? 'User') }} &bull; {{ auth()->user()->name ?? 'Akun contoh' }}
+                    </span>
                     <div class="relative" x-data="{ open: false }" @click.outside="open = false">
                         <button @click="open = !open" class="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-2 rounded-xl hover:bg-slate-100 transition-colors">
                             <div class="h-8 w-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
