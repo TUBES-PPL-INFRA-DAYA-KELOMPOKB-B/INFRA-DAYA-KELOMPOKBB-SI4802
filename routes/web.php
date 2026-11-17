@@ -11,10 +11,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserLogController;
 use App\Http\Controllers\Admin\VerifikasiController;
 use App\Http\Controllers\Api\WilayahController;
-<<<<<<< Updated upstream
-=======
 use App\Http\Controllers\DashboardController;
->>>>>>> Stashed changes
 use App\Http\Controllers\Petugas\TugasController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Publik\PetaPublikController;
@@ -41,19 +38,9 @@ Route::get('/api/peta-publik/markers', [PetaPublikController::class, 'markers'])
 Route::get('/lacak-tiket/{nomor_tiket?}', [TrackingController::class, 'index'])->name('tracking.publik');
 
 // Dashboard Utama Terotentikasi
-<<<<<<< Updated upstream
-Route::get('/dashboard', function () {
-    if (auth()->user()?->isPetugas()) {
-        return redirect()->route('petugas.tugas.index');
-    }
-
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-=======
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
->>>>>>> Stashed changes
 
 // API Endpoint Publik / Web
 Route::get('/api/wilayah/kecamatan/{id}/kelurahan', [WilayahController::class, 'kelurahanByKecamatan'])->name('api.wilayah.kelurahan');
@@ -132,16 +119,11 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:petugas')->prefix('petugas')->name('petugas.')->group(function () {
         Route::get('/tugas', [TugasController::class, 'index'])->name('tugas.index');
         Route::get('/tugas/{id}', [TugasController::class, 'show'])->name('tugas.show');
-<<<<<<< Updated upstream
         Route::post('/tugas/{id}/terima', [TugasController::class, 'acceptTask'])->name('tugas.terima');
         Route::post('/tugas/{id}/mulai', [TugasController::class, 'mulai'])->name('tugas.mulai');
         Route::post('/tugas/{id}/progres', [TugasController::class, 'updateProgres'])->name('tugas.progres');
         Route::post('/tugas/{id}/selesai', [TugasController::class, 'selesai'])->name('tugas.selesai');
         Route::post('/tugas/{id}/complete', [TugasController::class, 'completeTask'])->name('tugas.complete');
-=======
-        Route::post('/tugas/{id}/mulai', [TugasController::class, 'mulai'])->name('tugas.mulai');
-        Route::post('/tugas/{id}/selesai', [TugasController::class, 'selesai'])->name('tugas.selesai');
->>>>>>> Stashed changes
     });
 
     // Route Pimpinan Eksekutif

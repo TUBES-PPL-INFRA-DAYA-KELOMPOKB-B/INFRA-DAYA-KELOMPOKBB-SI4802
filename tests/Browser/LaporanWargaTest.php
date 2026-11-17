@@ -37,6 +37,7 @@ class LaporanWargaTest extends DuskTestCase
 
         $kategori = KategoriInfrastruktur::factory()->create([
             'nama_kategori' => 'Jalan Raya / Trotoar',
+            'tingkat_keparahan_default' => 'tinggi',
             'bobot_prioritas' => 3,
         ]);
 
