@@ -47,10 +47,10 @@ abstract class DuskTestCase extends BaseTestCase
             ]);
         })->all());
 
-        if (file_exists('C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe')) {
-            $options->setBinary('C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe');
-        } elseif (file_exists('C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe')) {
+        if (file_exists('C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe')) {
             $options->setBinary('C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe');
+        } elseif (file_exists('C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe')) {
+            $options->setBinary('C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe');
         }
 
         return RemoteWebDriver::create(
