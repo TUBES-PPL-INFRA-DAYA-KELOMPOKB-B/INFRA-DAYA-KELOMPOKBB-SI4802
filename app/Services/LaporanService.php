@@ -73,6 +73,11 @@ class LaporanService
             // PBI-11 (KF-11.4): Nilai awal prioritas laporan diisi dengan tingkat keparahan default kategori
             $kategori = KategoriInfrastruktur::find($data['kategori_id']);
             $prioritasAwal = $kategori?->tingkat_keparahan_default ?? 'sedang';
+            if ($prioritasAwal === 'kritis') {
+                $prioritasAwal = 'tinggi';
+            } elseif (! in_array($prioritasAwal, ['rendah', 'sedang', 'tinggi'])) {
+                $prioritasAwal = 'sedang';
+            }
 
             $laporan = LaporanKerusakan::create([
                 'nomor_tiket' => $this->generateNomorTiket(),
