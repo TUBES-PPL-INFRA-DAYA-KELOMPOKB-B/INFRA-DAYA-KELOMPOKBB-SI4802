@@ -16,7 +16,7 @@ Terakhir diperbarui: 2026-10-12 (Fase 1)
 | **4** | **Pengajuan Laporan oleh Warga** | **DONE** | Form Leaflet.js Geotagging, Tiket Unik harian, Riwayat status log, IDOR Policy, 5/5 Dusk test PASS |
 | **5** | **Verifikasi & Penilaian Prioritas (Sprint 1)** | **DONE** | PBI 13 (Antrean & Filter Tanggal), PBI 14 (Aksi Terima/Tolak), PBI 15 (Prioritas) |
 | 6 | Disposisi Penugasan & Dokumen PDF | TODO | Surat Tugas Digital & PDF DomPDF |
-| 7 | Pelaksanaan Lapangan oleh Petugas | TODO | Navigasi Koordinat, Foto Bukti Sesudah, Penutupan Tugas |
+| **7** | **Pelaksanaan Lapangan oleh Petugas (PBI-19, PBI-20, PBI-21)** | **DONE ✅** | PBI-19 (Daftar & Navigasi Peta), PBI-20 (Update Progres & Foto Hasil), PBI-21 (Aksi Tutup Tugas Selesai & Riwayat), 41/41 PHPUnit Feature PASS & 6/6 Dusk E2E PASS |
 | 8 | Tracking Timeline & Peta Publik | TODO | Pelacakan Nomor Tiket & Leaflet Sebaran Terbuka |
 | 9 | Umpan Balik & Rating Warga | TODO | Bintang 1-5 & Ulasan Pasca Perbaikan |
 | 10 | Dashboard Eksekutif & Monitoring SLA | TODO | Metrik SLA, Tren Laporan Chart.js, Heatmap |
@@ -93,12 +93,26 @@ Terakhir diperbarui: 2026-10-12 (Fase 1)
 - [ ] Cetak Surat Perintah Tugas (SPT) format PDF via `barryvdh/laravel-dompdf`.
 - [ ] Pengujian Dusk E2E Disposisi & PDF.
 
-### Fase 7: Pengerjaan Petugas Lapangan (STATUS: TODO)
-- [ ] Dashboard mobile-first petugas: Daftar tugas aktif.
-- [ ] Tautan navigasi GPS ke koordinat lokasi kerusakan.
-- [ ] Form penyelesaian: Unggah foto bukti sesudah + catatan perbaikan.
-- [ ] Penutupan tugas -> status laporan `selesai` & audit riwayat status.
-- [ ] Pengujian Dusk E2E Petugas.
+### Fase 7: Pengerjaan Petugas Lapangan (STATUS: DONE ✅)
+**Penanggung Jawab: Baso Aditya Riski (102022400282) - PBI-19, PBI-20, PBI-21**
+- [x] **[PBI-19] Daftar Tugas Lapangan & Navigasi Peta:**
+  - Isolasi daftar penugasan hanya milik petugas yang login (`petugas_id = id`).
+  - Kartu informasi tugas lengkap: nomor tiket, SPT, judul, kategori, wilayah, prioritas, tanggal disposisi, tenggat waktu, lencana status.
+  - Filter status multi-kriteria (`ditugaskan`, `diterima`, `sedang_dikerjakan`, `selesai`) dan pengurutan default prioritas tertinggi lalu tanggal disposisi terlama.
+  - Pencarian fleksibel kata kunci nomor tiket, judul, nomor SPT, dan wilayah.
+  - Tampilan empty state informatif saat tidak ada tugas.
+  - Lembar rincian tugas: peta geospasial Leaflet.js dengan marker koordinat kerusakan, instruksi verifikator, deskripsi laporan, foto bukti awal sebelum.
+  - Tautan deep link navigasi rute ke Google Maps, Waze, dan OpenStreetMap.
+  - Aksi `acceptTask` mengubah status `ditugaskan` menjadi `diterima` serta pencatatan riwayat status audit.
+  - Proteksi otorisasi pencegahan IDOR (akses tugas petugas lain ditolak 403).
+- [x] **[PBI-20] Update Progres Pengerjaan:**
+  - Aksi mulai pengerjaan fisik di lokasi mengubah status menjadi `sedang_dikerjakan` dan audit status `diproses`.
+- [x] **[PBI-21] Penutupan Tugas & Unggah Bukti Sesudah:**
+  - Unggah foto bukti hasil sesudah (MIME aman jpg/jpeg/png, maks 5 MB) dan catatan perbaikan.
+  - Penutupan tugas atomik (`DB::transaction`) mengubah status penugasan dan laporan menjadi `selesai`.
+- [x] **Pengujian Otomatis:**
+  - Backend Feature Test (`PBI19DaftarTugasNavigasiPetaTest.php` & `PetugasLapanganTest.php`) — **23/23 PASS (112 assertions)**.
+  - End-to-End Browser UI Test (`tests/Browser/PetugasTest.php`) — **5/5 PASS (21 assertions)**.
 
 ### Fase 8: Tracking Timeline & Peta Publik (STATUS: TODO)
 - [ ] Halaman publik lacak nomor tiket tanpa login.

@@ -43,6 +43,7 @@ return new class extends Migration
         if (Schema::hasTable('laporan_kerusakan')) {
             $driver = Schema::getConnection()->getDriverName();
             if ($driver === 'mysql') {
+                DB::table('laporan_kerusakan')->where('prioritas', 'kritis')->update(['prioritas' => 'tinggi']);
                 DB::statement("ALTER TABLE laporan_kerusakan MODIFY COLUMN prioritas ENUM('rendah', 'sedang', 'tinggi') NOT NULL DEFAULT 'sedang'");
             }
         }

@@ -52,11 +52,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Route Warga
-    Route::middleware('role:warga,admin')->prefix('warga')->name('warga.')->group(function () {
+    Route::middleware('role:warga')->prefix('warga')->name('warga.')->group(function () {
         Route::get('/pilih-wilayah', [LaporanController::class, 'pilihWilayah'])->name('laporan.pilih-wilayah');
         Route::get('/laporan-saya', [LaporanController::class, 'index'])->name('laporan.saya');
         Route::get('/lapor', [LaporanController::class, 'create'])->name('laporan.create');
-        Route::post('/lapor', [LaporanController::class, 'store'])->name('laporan.store');
+        Route::post('/lapor', [LaporanController::class, 'store'])
+            ->middleware('throttle:10,1')
+            ->name('laporan.store');
         Route::get('/laporan/{laporan}', [LaporanController::class, 'show'])->name('laporan.show');
         Route::get('/laporan/{laporan}/edit', [LaporanController::class, 'edit'])->name('laporan.edit');
         Route::put('/laporan/{laporan}', [LaporanController::class, 'update'])->name('laporan.update');
@@ -113,12 +115,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/rekap/pdf', [RekapController::class, 'exportPdf'])->name('rekap.pdf');
     });
 
-    // Route Petugas Lapangan
+    // Route Petugas Lapangan (PBI-19, PBI-20, PBI-21)
     Route::middleware('role:petugas')->prefix('petugas')->name('petugas.')->group(function () {
         Route::get('/tugas', [TugasController::class, 'index'])->name('tugas.index');
         Route::get('/tugas/{id}', [TugasController::class, 'show'])->name('tugas.show');
+        Route::post('/tugas/{id}/terima', [TugasController::class, 'acceptTask'])->name('tugas.terima');
         Route::post('/tugas/{id}/mulai', [TugasController::class, 'mulai'])->name('tugas.mulai');
+        Route::post('/tugas/{id}/progres', [TugasController::class, 'updateProgres'])->name('tugas.progres');
         Route::post('/tugas/{id}/selesai', [TugasController::class, 'selesai'])->name('tugas.selesai');
+        Route::post('/tugas/{id}/complete', [TugasController::class, 'completeTask'])->name('tugas.complete');
     });
 
     // Route Pimpinan Eksekutif

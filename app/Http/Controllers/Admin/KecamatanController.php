@@ -7,6 +7,7 @@ use App\Http\Requests\KecamatanRequest;
 use App\Services\WilayahService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class KecamatanController extends Controller
@@ -34,11 +35,19 @@ class KecamatanController extends Controller
 
     public function store(KecamatanRequest $request): RedirectResponse
     {
-        $this->wilayahService->createKecamatan($request->validated());
+        try {
+            DB::transaction(function () use ($request) {
+                $this->wilayahService->createKecamatan($request->validated());
+            });
 
-        return redirect()
-            ->route('admin.kecamatan.index')
-            ->with('success', 'Data kecamatan baru berhasil ditambahkan.');
+            return redirect()
+                ->route('admin.kecamatan.index')
+                ->with('success', 'Data kecamatan baru berhasil ditambahkan.');
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('admin.kecamatan.index')
+                ->with('error', 'Gagal menyimpan data kecamatan: ' . $e->getMessage());
+        }
     }
 
     public function edit(int $id, Request $request): View
@@ -52,25 +61,43 @@ class KecamatanController extends Controller
 
     public function update(KecamatanRequest $request, int $id): RedirectResponse
     {
-        $this->wilayahService->updateKecamatan($id, $request->validated());
+        try {
+            DB::transaction(function () use ($request, $id) {
+                $this->wilayahService->updateKecamatan($id, $request->validated());
+            });
 
-        return redirect()
-            ->route('admin.kecamatan.index')
-            ->with('success', 'Data kecamatan berhasil diperbarui.');
+            return redirect()
+                ->route('admin.kecamatan.index')
+                ->with('success', 'Data kecamatan berhasil diperbarui.');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            abort(404);
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('admin.kecamatan.index')
+                ->with('error', 'Gagal memperbarui data kecamatan: ' . $e->getMessage());
+        }
     }
 
     public function destroy(int $id): RedirectResponse
     {
         try {
-            $this->wilayahService->deleteKecamatan($id);
+            DB::transaction(function () use ($id) {
+                $this->wilayahService->deleteKecamatan($id);
+            });
 
             return redirect()
                 ->route('admin.kecamatan.index')
                 ->with('success', 'Data kecamatan berhasil dihapus.');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            abort(404);
         } catch (\RuntimeException $e) {
             return redirect()
                 ->route('admin.kecamatan.index')
                 ->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('admin.kecamatan.index')
+                ->with('error', 'Gagal menghapus kecamatan: ' . $e->getMessage());
         }
     }
 }
