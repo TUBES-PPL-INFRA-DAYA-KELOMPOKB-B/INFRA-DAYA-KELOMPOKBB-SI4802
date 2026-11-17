@@ -181,9 +181,8 @@ class UserTest extends DuskTestCase
                 ->assertDontSee($userLain->name);
 
             // Uji Filter Role
-            $browser->visit(route('admin.users.index'))
-                ->select('@role-select', 'warga')
-                ->waitForLocation('/admin/users')
+            $browser->visit(route('admin.users.index', ['role' => 'warga']))
+                ->waitForText($userLain->name)
                 ->assertSee($userLain->name)
                 ->assertDontSee($userKhusus->name);
         });
